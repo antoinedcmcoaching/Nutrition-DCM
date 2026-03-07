@@ -1073,7 +1073,7 @@ export default function FitWomenApp(){
                 }
                 prevGoalRef.current=key;
                 setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");
-              }}}
+              }}
               style={{
                 flex:1,padding:"12px 6px",
                 border:"none",
