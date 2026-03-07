@@ -891,6 +891,8 @@ export default function FitWomenApp(){
         @keyframes slideFromLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes fadeInScale{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
         @media(max-width:400px){.budget-label{display:none!important}.budget-bar-wrap{width:48px!important}}
+        button{-webkit-tap-highlight-color:transparent}
+        button:active{opacity:0.82;transform:scale(0.97)}
       `}</style>
 
       {/* ── HEADER ── */}
@@ -953,9 +955,23 @@ export default function FitWomenApp(){
         <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
             <button key={key} onClick={()=>{setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");}}
-              style={{flex:1,padding:"10px 6px",border:"1.5px solid",borderColor:activeGoal===key?ROSE:"#e8e2db",borderRadius:14,background:activeGoal===key?DARK:"#fff",color:activeGoal===key?"#fff":"#aaa",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.2s",textAlign:"center"}}>
-              <div style={{fontSize:20,marginBottom:2}}>{cfg.emoji}</div>
-              <div style={{textTransform:"uppercase",fontWeight:700,fontSize:9}}>{cfg.label}</div>
+              style={{
+                flex:1,padding:"12px 6px",
+                border:"none",
+                borderRadius:20,
+                background:activeGoal===key?DARK:cfg.color+"12",
+                color:activeGoal===key?"#fff":cfg.color,
+                fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,
+                cursor:"pointer",
+                transition:"all 0.22s",
+                textAlign:"center",
+                boxShadow:activeGoal===key
+                  ?`0 4px 18px ${cfg.color}44, inset 0 1px 0 rgba(255,255,255,0.08)`
+                  :"0 1px 4px rgba(0,0,0,0.06)",
+              }}>
+              <div style={{fontSize:22,marginBottom:3}}>{cfg.emoji}</div>
+              <div style={{textTransform:"uppercase",fontWeight:800,fontSize:9,letterSpacing:"0.08em"}}>{cfg.label}</div>
+              {activeGoal===key&&<div style={{width:18,height:2,borderRadius:99,background:cfg.color,margin:"5px auto 0"}}/>}
             </button>
           ))}
         </div>
@@ -1031,9 +1047,27 @@ export default function FitWomenApp(){
               {paginated.map((r,i)=>{
                 const m=computeMacros(r.ingredients);const isSel=selected?.id===r.id;const gc2=GOALS[r.goal];const isFav=favorites.includes(r.id);
                 const tags=getTags(r);
+                // Teinte de fond subtile selon l'objectif
+                const cardBg=isSel?"#fff":activeGoal==="seche"?"#fdf7f7":activeGoal==="muscle"?"#f7fdf8":"#faf7f4";
+                const cardBorder=isSel?ROSE:activeGoal==="seche"?"#f0e4e4":activeGoal==="muscle"?"#e4f0e6":"#ece6df";
                 return(
                   <div key={r.id} onClick={()=>selectRecipe(r)}
-                    style={{background:isSel?"#fff":"#faf7f4",border:`1.5px solid ${isSel?ROSE:"#ece6df"}`,borderRadius:18,padding:"16px 18px",cursor:"pointer",transition:"all 0.18s",boxShadow:isSel?"0 6px 28px rgba(201,168,130,0.22)":"0 1px 4px rgba(0,0,0,0.04)",animation:`fadeIn 0.3s ease ${(i%20)*0.02}s both`,position:"relative"}}>
+                    style={{
+                      background:cardBg,
+                      border:`1.5px solid ${cardBorder}`,
+                      borderRadius:18,padding:"16px 18px",
+                      cursor:"pointer",
+                      transition:"all 0.18s",
+                      boxShadow:isSel?`0 6px 28px ${gc2.color}28`:"0 1px 4px rgba(0,0,0,0.05)",
+                      animation:`fadeIn 0.3s ease ${(i%20)*0.02}s both`,
+                      position:"relative",
+                      // Tap feedback mobile
+                      WebkitTapHighlightColor:"transparent",
+                    }}
+                    onTouchStart={e=>e.currentTarget.style.transform="scale(0.97)"}
+                    onTouchEnd={e=>{e.currentTarget.style.transform="scale(1)"}}
+                    onTouchCancel={e=>{e.currentTarget.style.transform="scale(1)"}}
+                  >
                     <button onClick={(e)=>toggleFav(r.id,e)}
                       style={{position:"absolute",top:11,right:11,background:"none",border:"none",cursor:"pointer",fontSize:15,padding:4,zIndex:2,lineHeight:1}}>
                       {isFav?"❤️":"🤍"}
