@@ -585,6 +585,12 @@ export default function FitWomenApp(){
   const [addToWeekTarget,setAddToWeekTarget]=useState(null); // {day,slot}
   const [showWeekPicker,setShowWeekPicker]=useState(false);
 
+  // ── Mode sombre ──
+  const [darkMode,setDarkMode]=useState(()=>{try{return localStorage.getItem("fw_dark")==="1";}catch{return false;}});
+
+  // ── Historique 7 jours ──
+  const [dailyHistory,setDailyHistory]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_history")||"[]");}catch{return[];}});
+
   // ── Animations swipe ──
   const [swipeAnim,setSwipeAnim]=useState(null); // 'left'|'right'|null
 
@@ -604,11 +610,33 @@ export default function FitWomenApp(){
   useEffect(()=>{localStorage.setItem("fw_goal",String(dailyGoalKcal));},[dailyGoalKcal]);
   useEffect(()=>{localStorage.setItem("fw_week",JSON.stringify(week));},[week]);
   useEffect(()=>{if(profile.done)localStorage.setItem("fw_profile",JSON.stringify(profile));},[profile]);
+  useEffect(()=>{localStorage.setItem("fw_dark",darkMode?"1":"0");},[darkMode]);
+  useEffect(()=>{localStorage.setItem("fw_history",JSON.stringify(dailyHistory));},[dailyHistory]);
 
   // Sync objectif calorique avec le profil
   useEffect(()=>{if(profile.calTarget)setDailyGoalKcal(profile.calTarget);},[profile.calTarget]);
   // Sync états panneau profil quand on l'ouvre
   useEffect(()=>{if(showProfile){setPName(profile.name||"");setPGoal(profile.goal||"seche");setPCal(profile.calTarget||1600);}},[showProfile]);
+
+  // ── Auto-reset journal + sauvegarde historique ──
+  useEffect(()=>{
+    const today=new Date().toISOString().slice(0,10);
+    const lastDate=localStorage.getItem("fw_last_date");
+    if(lastDate&&lastDate!==today){
+      // Nouveau jour : sauvegarder hier dans l'historique
+      const storedRecipes=JSON.parse(localStorage.getItem("fw_daily_snap")||"[]");
+      if(storedRecipes.length>0){
+        const tot=storedRecipes.reduce((acc,r)=>{const m=r.macros||{cal:0,p:0,c:0,f:0};return{cal:acc.cal+m.cal,p:acc.p+m.p,c:acc.c+m.c,f:acc.f+m.f};},{cal:0,p:0,c:0,f:0});
+        const entry={date:lastDate,cal:Math.round(tot.cal),p:Math.round(tot.p),c:Math.round(tot.c),f:Math.round(tot.f),goal:Number(localStorage.getItem("fw_goal")||1600)};
+        setDailyHistory(h=>[entry,...h].slice(0,7));
+      }
+      setDailyRecipes([]);
+    }
+    localStorage.setItem("fw_last_date",today);
+  },[]);
+
+  // Snapshot du journal pour la sauvegarde inter-sessions
+  useEffect(()=>{localStorage.setItem("fw_daily_snap",JSON.stringify(dailyRecipes));},[dailyRecipes]);
 
   // Scroll to top on filter change
   useEffect(()=>{
@@ -749,32 +777,54 @@ export default function FitWomenApp(){
 
   const gc=GOALS[activeGoal];
 
+  // ── Thème dark/light ──
+  const T={
+    pageBg:    darkMode?"#111113":"#f9f6f2",
+    card:      darkMode?"#1c1c1e":"#fff",
+    cardAlt:   darkMode?"#161618":"#faf7f4",
+    cardAlt2:  darkMode?"#1a1a1c":"#faf7f4",
+    border:    darkMode?"#2c2c2e":"#e8e2db",
+    borderL:   darkMode?"#232325":"#f0ebe4",
+    borderLL:  darkMode?"#1e1e20":"#f5f0ea",
+    text:      darkMode?"#f2f2f7":DARK,
+    textM:     darkMode?"#8e8e93":"#bbb",
+    textF:     darkMode?"#48484a":"#ddd",
+    input:     darkMode?"#2c2c2e":"#fff",
+    inputBorder:darkMode?"#3a3a3c":"#e8e2db",
+    tagBg:     darkMode?"#2a2a2c":"#f0ebe4",
+    tagColor:  darkMode?"#a09080":"#8a7060",
+    subBg:     darkMode?"rgba(255,255,255,0.04)":"#faf7f4",
+    rose_l:    darkMode?"rgba(201,168,130,0.15)":ROSE_L,
+    sheetBg:   darkMode?"#1a1a1c":"#fff",
+    footerBg:  darkMode?"#1a1a1c":"#faf7f4",
+  };
+
   // ── RENDER DETAIL ──────────────────────────────────────────────────────────
   function renderDetailContent(){
     if(!selected)return null;
     return(<div style={{animation:swipeAnim?`${swipeAnim==="left"?"slideFromRight":"slideFromLeft"} 0.28s ease`:"none"}}>
       {activeTab==="recette"&&<>
         {adjMacros&&(
-          <div style={{background:"#faf7f4",borderRadius:16,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-around",textAlign:"center"}}>
+          <div style={{background:T.cardAlt,borderRadius:16,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-around",textAlign:"center"}}>
             {[["Cal",adjMacros.cal,"kcal",ROSE],["Prot",adjMacros.p,"g","#d4826a"],["Gluc",adjMacros.c,"g","#7a9e87"],["Lip",adjMacros.f,"g","#b08a6e"]].map(([l,v,u,c])=>(
               <div key={l}><div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:c}}>{v}</div><div style={{fontSize:9,color:"#ccc",textTransform:"uppercase",letterSpacing:"0.07em"}}>{l}</div></div>
             ))}
           </div>
         )}
         {/* Tags */}
-        {(()=>{const tags=getTags(selected);return tags.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>{tags.map(t=><span key={t} style={{fontSize:10,background:"#f0ebe4",color:"#8a7060",borderRadius:99,padding:"3px 10px",fontWeight:600}}>{t}</span>)}</div>})()}
+        {(()=>{const tags=getTags(selected);return tags.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>{tags.map(t=><span key={t} style={{fontSize:10,background:T.tagBg,color:T.tagColor,borderRadius:99,padding:"3px 10px",fontWeight:600}}>{t}</span>)}</div>})()}
         {/* Boutons actions */}
         <div style={{display:"flex",gap:8,marginBottom:16}}>
           <button onClick={(e)=>addToDay(selected,e)}
-            style={{flex:1,padding:"9px 6px",background:dailyRecipes.find(r=>r.addedAt&&r.id===selected.id)?"#e8f4ea":"#faf7f4",border:"1px solid #e8e2db",borderRadius:12,fontSize:10,fontWeight:700,color:"#5a8a5a",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            style={{flex:1,padding:"9px 6px",background:dailyRecipes.find(r=>r.addedAt&&r.id===selected.id)?(darkMode?"rgba(80,120,80,0.2)":"#e8f4ea"):T.cardAlt,border:`1px solid ${T.border}`,borderRadius:12,fontSize:10,fontWeight:700,color:"#5a8a5a",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
             📅 Ajouter au jour
           </button>
           <button onClick={(e)=>{e.stopPropagation();setShowWeekPicker(true);}}
-            style={{flex:1,padding:"9px 6px",background:"#f5f0f8",border:"1px solid #e0d8e8",borderRadius:12,fontSize:10,fontWeight:700,color:"#8060a0",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            style={{flex:1,padding:"9px 6px",background:darkMode?"rgba(100,70,140,0.15)":"#f5f0f8",border:darkMode?"1px solid rgba(100,70,140,0.3)":"1px solid #e0d8e8",borderRadius:12,fontSize:10,fontWeight:700,color:"#8060a0",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
             📆 Semainier
           </button>
           <button onClick={(e)=>addToCart(selected,e)}
-            style={{flex:1,padding:"9px 6px",background:cart.find(x=>x.id===selected.id)?"#fdf3e8":"#faf7f4",border:"1px solid #e8e2db",borderRadius:12,fontSize:10,fontWeight:700,color:ROSE,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            style={{flex:1,padding:"9px 6px",background:cart.find(x=>x.id===selected.id)?(darkMode?"rgba(180,130,80,0.15)":"#fdf3e8"):T.cardAlt,border:`1px solid ${T.border}`,borderRadius:12,fontSize:10,fontWeight:700,color:ROSE,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
             🛒 Courses
           </button>
         </div>
@@ -798,11 +848,11 @@ export default function FitWomenApp(){
           {Object.entries(adjIngredients).map(([key,grams])=>{
             const food=FOODS[key];if(!food)return null;const s=grams/100;
             return(
-              <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid #f5f0ea"}}>
+              <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:`1px solid ${T.borderLL}`}}>
                 <div style={{display:"flex",alignItems:"center",gap:9}}>
                   <span style={{fontSize:17}}>{food.emoji}</span>
                   <div>
-                    <div style={{fontSize:13,fontWeight:600,color:DARK}}>{food.name}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:T.text}}>{food.name}</div>
                     <div style={{fontSize:10,color:"#ccc",marginTop:1}}>{Math.round(food.cal*s)} kcal · P:{Math.round(food.p*s)}g G:{Math.round(food.c*s)}g L:{Math.round(food.f*s)}g</div>
                   </div>
                 </div>
@@ -822,7 +872,7 @@ export default function FitWomenApp(){
             <div style={{background:"#faf7f4",borderRadius:12,padding:"10px 13px",flex:1,fontSize:12,color:"#444",lineHeight:1.6}}>{step}</div>
           </div>
         ))}
-        <div style={{marginTop:16,background:"#fdf8f3",borderRadius:13,padding:"13px 15px",border:`1px solid ${ROSE}22`}}>
+        <div style={{marginTop:16,background:T.cardAlt,borderRadius:13,padding:"13px 15px",border:`1px solid ${ROSE}22`}}>
           <div style={{fontSize:10,fontWeight:700,color:ROSE,marginBottom:4}}>💡 Conseil</div>
           <div style={{fontSize:11,color:"#aaa",lineHeight:1.6}}>{selected.goal==="seche"?"Peser les ingrédients pour rester dans ton déficit. Chaque gramme compte !":selected.goal==="muscle"?"Ne pas rogner sur les portions — le surplus est indispensable.":"Écoute tes sensations de faim et satiété."}</div>
         </div>
@@ -835,7 +885,7 @@ export default function FitWomenApp(){
           const val=adjMicros[key];const pct=Math.min(100,Math.round((val/info.rdi)*100));
           const isGreat=pct>=50;const isGood=pct>=20;
           return(
-            <div key={key} style={{marginBottom:12,padding:"11px 13px",background:"#faf7f4",borderRadius:12}}>
+            <div key={key} style={{marginBottom:12,padding:"11px 13px",background:T.cardAlt,borderRadius:12}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <span style={{fontSize:15}}>{info.icon}</span>
@@ -888,7 +938,7 @@ export default function FitWomenApp(){
 
   // ─────────────────────────────────────────────────────────────────────────────
   return(
-    <div style={{minHeight:"100vh",background:"#f9f6f2",fontFamily:"'Jost',sans-serif",color:DARK}}>
+    <div style={{minHeight:"100vh",background:T.pageBg,fontFamily:"'Jost',sans-serif",color:DARK}}>
       <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
       <style>{`
         *{box-sizing:border-box}
@@ -904,6 +954,8 @@ export default function FitWomenApp(){
         button{-webkit-tap-highlight-color:transparent}
         button:active{opacity:0.82;transform:scale(0.97)}
         .skeleton{background:linear-gradient(90deg,#f0ebe4 25%,#faf6f1 50%,#f0ebe4 75%);background-size:400px 100%;animation:shimmer 1.4s infinite linear;border-radius:10px}
+        *{transition:background-color 0.2s ease,border-color 0.2s ease,color 0.15s ease}
+        button,input{transition:background-color 0.2s ease,border-color 0.2s ease,color 0.15s ease,transform 0.15s ease,opacity 0.15s ease}
       `}</style>
 
       {/* ── HEADER ── */}
@@ -992,7 +1044,7 @@ export default function FitWomenApp(){
           {/* Barre de recherche */}
           <div style={{marginBottom:8}}>
             <input placeholder="🔍 Rechercher une recette..." value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}
-              style={{width:"100%",padding:"9px 16px",border:"1px solid #e8e2db",borderRadius:99,fontSize:12,outline:"none",color:DARK,background:"#fff",fontFamily:"'Jost',sans-serif"}}/>
+              style={{width:"100%",padding:"9px 16px",border:`1px solid ${T.inputBorder}`,borderRadius:99,fontSize:12,outline:"none",color:T.text,background:T.input,fontFamily:"'Jost',sans-serif"}}/>
           </div>
           {/* Filtres repas */}
           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:6}}>
@@ -1000,13 +1052,13 @@ export default function FitWomenApp(){
               const count=m==="Tous"?ALL_RECIPES.filter(r=>r.goal===activeGoal).length:(mealCounts[m]||0);
               return(
                 <button key={m} onClick={()=>{setActiveMeal(m);setPage(1);setShowFavsOnly(false);}}
-                  style={{padding:"5px 11px",border:"1px solid",borderColor:activeMeal===m&&!showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:activeMeal===m&&!showFavsOnly?ROSE_L:"#fff",color:activeMeal===m&&!showFavsOnly?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+                  style={{padding:"5px 11px",border:"1px solid",borderColor:activeMeal===m&&!showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:activeMeal===m&&!showFavsOnly?T.rose_l:T.card,color:activeMeal===m&&!showFavsOnly?"#8a6040":T.textM,fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
                   {m} <span style={{opacity:0.55}}>({count})</span>
                 </button>
               );
             })}
             <button onClick={()=>{setShowFavsOnly(f=>!f);setPage(1);}}
-              style={{padding:"5px 11px",border:"1px solid",borderColor:showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:showFavsOnly?ROSE_L:"#fff",color:showFavsOnly?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+              style={{padding:"5px 11px",border:"1px solid",borderColor:showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:showFavsOnly?T.rose_l:T.card,color:showFavsOnly?"#8a6040":T.textM,fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
               ❤️ Favoris{favorites.length>0?` (${favorites.length})`:""}
             </button>
           </div>
@@ -1014,7 +1066,7 @@ export default function FitWomenApp(){
           <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:6}}>
             {ALL_TAGS.map(tag=>(
               <button key={tag} onClick={()=>{setActiveTagFilter(t=>t===tag?null:tag);setPage(1);}}
-                style={{padding:"5px 11px",border:"1px solid",borderColor:activeTagFilter===tag?"#8060a0":"#e8e2db",borderRadius:99,background:activeTagFilter===tag?"#f5f0f8":"#fff",color:activeTagFilter===tag?"#8060a0":"#999",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+                style={{padding:"5px 11px",border:"1px solid",borderColor:activeTagFilter===tag?"#8060a0":"#e8e2db",borderRadius:99,background:activeTagFilter===tag?(darkMode?"rgba(120,90,160,0.2)":"#f5f0f8"):T.card,color:activeTagFilter===tag?"#a080d0":T.textM,fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
                 {tag}
               </button>
             ))}
@@ -1024,14 +1076,14 @@ export default function FitWomenApp(){
             <span style={{fontSize:10,color:"#ccc",fontWeight:500}}>{filtered.length} recette{filtered.length>1?"s":""}</span>
             <div style={{position:"relative"}}>
               <button onClick={()=>setShowSortPanel(s=>!s)}
-                style={{padding:"6px 14px",border:`1.5px solid ${sortBy!=="default"?ROSE:"#e8e2db"}`,borderRadius:99,background:sortBy!=="default"?ROSE_L:"#fff",color:sortBy!=="default"?"#8a6040":"#999",fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                style={{padding:"6px 14px",border:`1.5px solid ${sortBy!=="default"?ROSE:"#e8e2db"}`,borderRadius:99,background:sortBy!=="default"?T.rose_l:T.card,color:sortBy!=="default"?"#c09060":T.textM,fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
                 <span>↕</span> <span>{sortBy==="default"?"Trier":sortBy==="cal_asc"?"Cal ↑":sortBy==="cal_desc"?"Cal ↓":"Prot ↓"}</span>
               </button>
               {showSortPanel&&(
-                <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",background:"#fff",border:"1px solid #e8e2db",borderRadius:14,boxShadow:"0 8px 30px rgba(0,0,0,0.12)",zIndex:100,minWidth:175,overflow:"hidden",animation:"fadeInScale 0.15s ease"}}>
+                <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",background:T.card,border:`1px solid ${T.border}`,borderRadius:14,boxShadow:darkMode?"0 8px 30px rgba(0,0,0,0.5)":"0 8px 30px rgba(0,0,0,0.12)",zIndex:100,minWidth:175,overflow:"hidden",animation:"fadeInScale 0.15s ease"}}>
                   {[["default","Par défaut"],["cal_asc","Calories ↑"],["cal_desc","Calories ↓"],["prot_desc","Protéines ↓"]].map(([v,l])=>(
                     <button key={v} onClick={()=>{setSortBy(v);setShowSortPanel(false);}}
-                      style={{display:"block",width:"100%",textAlign:"left",padding:"11px 16px",border:"none",background:sortBy===v?ROSE_L:"#fff",color:sortBy===v?"#8a6040":DARK,fontFamily:"'Jost',sans-serif",fontSize:12,fontWeight:sortBy===v?700:400,cursor:"pointer",borderBottom:"1px solid #f5f0ea"}}>
+                      style={{display:"block",width:"100%",textAlign:"left",padding:"11px 16px",border:"none",background:sortBy===v?T.rose_l:T.card,color:sortBy===v?"#c09060":T.text,fontFamily:"'Jost',sans-serif",fontSize:12,fontWeight:sortBy===v?700:400,cursor:"pointer",borderBottom:`1px solid ${T.borderLL}`}}>
                       {sortBy===v?"✓  ":""}{l}
                     </button>
                   ))}
@@ -1073,8 +1125,8 @@ export default function FitWomenApp(){
                 const m=computeMacros(r.ingredients);const isSel=selected?.id===r.id;const gc2=GOALS[r.goal];const isFav=favorites.includes(r.id);
                 const tags=getTags(r);
                 // Teinte de fond subtile selon l'objectif
-                const cardBg=isSel?"#fff":activeGoal==="seche"?"#fdf7f7":activeGoal==="muscle"?"#f7fdf8":"#faf7f4";
-                const cardBorder=isSel?ROSE:activeGoal==="seche"?"#f0e4e4":activeGoal==="muscle"?"#e4f0e6":"#ece6df";
+                const cardBg=isSel?T.card:darkMode?(activeGoal==="seche"?"#1d1a1a":activeGoal==="muscle"?"#1a1d1a":"#1a1a1c"):(activeGoal==="seche"?"#fdf7f7":activeGoal==="muscle"?"#f7fdf8":"#faf7f4");
+                const cardBorder=isSel?ROSE:darkMode?(activeGoal==="seche"?"#2a2020":activeGoal==="muscle"?"#202a20":"#252525"):(activeGoal==="seche"?"#f0e4e4":activeGoal==="muscle"?"#e4f0e6":"#ece6df");
                 return(
                   <div key={r.id} onClick={()=>selectRecipe(r)}
                     style={{
@@ -1103,9 +1155,9 @@ export default function FitWomenApp(){
                         <span style={{fontSize:9,fontWeight:700,color:gc2.color,background:gc2.color+"18",borderRadius:20,padding:"2px 8px",textTransform:"uppercase",letterSpacing:"0.05em"}}>{r.meal}</span>
                         {tags.slice(0,1).map(t=><span key={t} style={{fontSize:8,color:"#aaa",background:"#f0ebe4",borderRadius:99,padding:"1px 7px",fontWeight:600}}>{t}</span>)}
                       </div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,fontWeight:700,color:DARK,lineHeight:1.25,marginBottom:5}}>{r.name}</div>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,fontWeight:700,color:T.text,lineHeight:1.25,marginBottom:5}}>{r.name}</div>
                     </div>
-                    <div style={{display:"flex",gap:10,paddingTop:9,marginTop:6,borderTop:"1px solid #f0ebe4",alignItems:"center"}}>
+                    <div style={{display:"flex",gap:10,paddingTop:9,marginTop:6,borderTop:`1px solid ${T.borderL}`,alignItems:"center"}}>
                       <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:19,fontWeight:700,color:ROSE}}>{m.cal}<span style={{fontSize:9,color:"#ccc",fontWeight:400,marginLeft:1}}>kcal</span></div>
                       {[["P",m.p,"#d4826a"],["G",m.c,"#7a9e87"],["L",m.f,ROSE]].map(([l,v,c])=>(
                         <span key={l} style={{fontSize:10,color:c,fontWeight:700}}>{l}:{v}g</span>
@@ -1123,10 +1175,33 @@ export default function FitWomenApp(){
                 </button>
               </div>
             )}
-            {filtered.length===0&&<div style={{textAlign:"center",padding:"50px 20px",color:"#ccc"}}>
-              {showFavsOnly?"Aucun favori — clique sur 🤍 pour en ajouter":"Aucune recette trouvée"}
-            </div>}
-            <div style={{marginTop:14,padding:"10px 13px",background:"#faf7f4",borderRadius:12,display:"flex",gap:8,alignItems:"center"}}>
+            {filtered.length===0&&(
+              <div style={{textAlign:"center",padding:"50px 20px"}}>
+                {showFavsOnly?(
+                  <>
+                    <svg width="90" height="90" viewBox="0 0 90 90" fill="none" style={{margin:"0 auto 16px",display:"block",opacity:0.3}}>
+                      <circle cx="45" cy="45" r="42" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                      <path d="M45 62 C45 62 22 48 22 35 C22 27 29 21 36 21 C40 21 43 23 45 26 C47 23 50 21 54 21 C61 21 68 27 68 35 C68 48 45 62 45 62Z" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                      <line x1="30" y1="30" x2="60" y2="60" stroke={T.textM} strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    <div style={{fontSize:14,fontWeight:600,color:T.textM}}>Aucun favori</div>
+                    <div style={{fontSize:11,marginTop:6,color:T.textF}}>Clique sur 🤍 sur une recette pour en ajouter</div>
+                  </>
+                ):(
+                  <>
+                    <svg width="90" height="90" viewBox="0 0 90 90" fill="none" style={{margin:"0 auto 16px",display:"block",opacity:0.3}}>
+                      <circle cx="45" cy="45" r="42" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                      <circle cx="45" cy="38" r="14" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                      <line x1="54" y1="49" x2="64" y2="59" stroke={T.textM} strokeWidth="2" strokeLinecap="round"/>
+                      <line x1="38" y1="38" x2="52" y2="38" stroke={T.textM} strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    <div style={{fontSize:14,fontWeight:600,color:T.textM}}>Aucune recette trouvée</div>
+                    <div style={{fontSize:11,marginTop:6,color:T.textF}}>Essaie d'autres filtres ou efface la recherche</div>
+                  </>
+                )}
+              </div>
+            )}
+            <div style={{marginTop:14,padding:"10px 13px",background:T.footerBg,borderRadius:12,display:"flex",gap:8,alignItems:"center"}}>
               <span style={{fontSize:13}}>📋</span>
               <span style={{fontSize:10,color:"#bbb"}}>Valeurs issues de la <strong style={{color:"#aaa"}}>Table Ciqual 2025</strong> (Anses)</span>
             </div>
@@ -1135,7 +1210,7 @@ export default function FitWomenApp(){
           {/* Desktop panel */}
           {!isMobile&&showDetail&&selected&&(
             <div style={{position:"sticky",top:68}}>
-              <div style={{background:"#fff",border:"1.5px solid #ede8e3",borderRadius:20,overflow:"hidden",boxShadow:"0 10px 50px rgba(201,168,130,0.18)"}}>
+              <div style={{background:T.sheetBg,border:`1.5px solid ${T.border}`,borderRadius:20,overflow:"hidden",boxShadow:"0 10px 50px rgba(201,168,130,0.18)"}}>
                 <SheetHeader/>
                 <div style={{maxHeight:"calc(100vh - 250px)",overflowY:"auto",padding:"18px 22px"}}>
                   {renderDetailContent()}
@@ -1150,7 +1225,7 @@ export default function FitWomenApp(){
       {isMobile&&showDetail&&selected&&(
         <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>{setShowDetail(false);setSelected(null);}} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 -6px 40px rgba(0,0,0,0.18)",animation:"slideUp 0.25s ease"}}>
+          <div style={{position:"relative",background:T.sheetBg,borderRadius:"20px 20px 0 0",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 -6px 40px rgba(0,0,0,0.18)",animation:"slideUp 0.25s ease"}}>
             <div onTouchStart={onSheetTouchStart} onTouchEnd={onSheetTouchEnd} style={{padding:"10px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0,cursor:"grab"}}>
               <div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/>
             </div>
@@ -1200,7 +1275,7 @@ export default function FitWomenApp(){
       {showWeek&&(
         <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>setShowWeek(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#f9f6f2",borderRadius:"20px 20px 0 0",height:"90vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
+          <div style={{position:"relative",background:T.pageBg,borderRadius:"20px 20px 0 0",height:"90vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
             {/* Header semainier */}
             <div style={{background:DARK,borderRadius:"20px 20px 0 0",padding:"14px 18px",flexShrink:0}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
@@ -1238,7 +1313,7 @@ export default function FitWomenApp(){
                 const tot=weekDayTotal(weekDay);
                 const totMacros=SLOTS.reduce((acc,slot)=>week[weekDay][slot].reduce((a,r)=>{const m=r.macros||{p:0,c:0,f:0};return{p:a.p+m.p,c:a.c+m.c,f:a.f+m.f};},acc),{p:0,c:0,f:0});
                 return tot>0&&(
-                  <div style={{background:"#fff",borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",border:"1px solid #ede8e0",boxShadow:"0 2px 10px rgba(0,0,0,0.04)"}}>
+                  <div style={{background:T.card,borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",border:`1px solid ${T.border}`,boxShadow:"0 2px 10px rgba(0,0,0,0.04)"}}>
                     <div style={{fontSize:11,color:"#aaa",fontWeight:700}}>Total {DAYLABELS[DAYS.indexOf(weekDay)]}</div>
                     <div style={{display:"flex",gap:12,alignItems:"center"}}>
                       <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:ROSE}}>{tot}<span style={{fontSize:9,color:"#ccc",marginLeft:1}}>kcal</span></div>
@@ -1258,7 +1333,7 @@ export default function FitWomenApp(){
                     {week[weekDay][slot].length===0&&<span style={{fontSize:10,color:"#ddd",marginLeft:4}}>— vide</span>}
                   </div>
                   {week[weekDay][slot].map((item,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fff",borderRadius:12,padding:"10px 12px",marginBottom:6,border:"1px solid #ede8e0",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:T.card,borderRadius:12,padding:"10px 12px",marginBottom:6,border:`1px solid ${T.border}`,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
                         <span style={{fontSize:18}}>{item.emoji}</span>
                         <div>
@@ -1285,7 +1360,7 @@ export default function FitWomenApp(){
       {showCart&&(
         <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>setShowCart(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
+          <div style={{position:"relative",background:T.sheetBg,borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
             <div style={{padding:"12px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}><div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/></div>
             <div style={{background:DARK,padding:"13px 18px",flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
@@ -1299,17 +1374,22 @@ export default function FitWomenApp(){
             </div>
             <div style={{overflowY:"auto",padding:"14px 18px 40px",flex:1}}>
               {cart.length===0?(
-                <div style={{textAlign:"center",padding:"40px 20px",color:"#ccc"}}>
-                  <div style={{fontSize:36,marginBottom:10}}>🛒</div>
-                  <div style={{fontSize:14}}>Panier vide</div>
-                  <div style={{fontSize:11,marginTop:5}}>Ajoute des recettes depuis le panneau détail</div>
+                <div style={{textAlign:"center",padding:"40px 20px"}}>
+                  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" style={{margin:"0 auto 14px",display:"block",opacity:0.3}}>
+                    <circle cx="40" cy="40" r="38" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                    <path d="M18 24 L25 24 L32 50 L58 50 L63 34 L29 34" stroke={T.textM} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                    <circle cx="35" cy="56" r="3" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                    <circle cx="55" cy="56" r="3" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                  </svg>
+                  <div style={{fontSize:14,fontWeight:600,color:T.textM}}>Panier vide</div>
+                  <div style={{fontSize:11,marginTop:5,color:T.textF}}>Ajoute des recettes depuis le panneau détail</div>
                 </div>
               ):(
                 <>
                   <div style={{marginBottom:18}}>
                     <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Recettes sélectionnées</div>
                     {cart.map(item=>(
-                      <div key={item.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid #f5f0ea"}}>
+                      <div key={item.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:`1px solid ${T.borderLL}`}}>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
                           <span style={{fontSize:17}}>{item.emoji}</span>
                           <div>
@@ -1332,7 +1412,7 @@ export default function FitWomenApp(){
                       const checked=checkedItems[key];
                       return(
                         <div key={key} onClick={()=>setCheckedItems(c=>({...c,[key]:!c[key]}))}
-                          style={{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:"1px solid #f5f0ea",cursor:"pointer",opacity:checked?0.4:1}}>
+                          style={{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:`1px solid ${T.borderLL}`,cursor:"pointer",opacity:checked?0.4:1}}>
                           <div style={{width:19,height:19,borderRadius:5,border:`2px solid ${checked?ROSE:"#e0d8d0"}`,background:checked?ROSE:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                             {checked&&<span style={{color:"#fff",fontSize:10}}>✓</span>}
                           </div>
@@ -1354,7 +1434,7 @@ export default function FitWomenApp(){
       {showDailyPanel&&(
         <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>setShowDailyPanel(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
+          <div style={{position:"relative",background:T.sheetBg,borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
             <div style={{padding:"12px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}><div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/></div>
             <div style={{background:DARK,padding:"13px 18px",flexShrink:0}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
@@ -1398,17 +1478,52 @@ export default function FitWomenApp(){
               </div>
             </div>
             <div style={{overflowY:"auto",padding:"14px 18px 40px",flex:1}}>
+              {/* ── Historique 7 jours ── */}
+              {dailyHistory.length>0&&(
+                <div style={{marginBottom:20}}>
+                  <div style={{fontSize:10,fontWeight:700,color:T.textM,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>7 derniers jours</div>
+                  {dailyHistory.map((entry,i)=>{
+                    const d=new Date(entry.date);
+                    const label=i===0?"Hier":d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+                    const pct=Math.min(100,Math.round(entry.cal/entry.goal*100));
+                    const ok=pct>=90&&pct<=110;
+                    return(
+                      <div key={entry.date} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:T.cardAlt,borderRadius:12,marginBottom:6}}>
+                        <div style={{width:36,textAlign:"center"}}>
+                          <div style={{fontSize:10,fontWeight:700,color:T.textM,textTransform:"capitalize"}}>{label}</div>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{height:5,background:T.border,borderRadius:99,overflow:"hidden"}}>
+                            <div style={{height:"100%",width:`${pct}%`,background:pct>110?"#f08080":pct>80?"#80c880":"#e8c070",borderRadius:99}}/>
+                          </div>
+                        </div>
+                        <div style={{textAlign:"right",minWidth:70}}>
+                          <span style={{fontSize:12,fontWeight:800,color:ok?"#80c880":pct>110?"#f08080":T.textM,fontFamily:"'Cormorant Garamond',serif"}}>{entry.cal}</span>
+                          <span style={{fontSize:9,color:T.textM}}> kcal</span>
+                          <span style={{fontSize:11,marginLeft:4}}>{ok?"✓":pct>110?"↑":"↓"}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {dailyRecipes.length===0?(
-                <div style={{textAlign:"center",padding:"40px 20px",color:"#ccc"}}>
-                  <div style={{fontSize:36,marginBottom:10}}>📅</div>
-                  <div style={{fontSize:14}}>Aucun repas enregistré</div>
-                  <div style={{fontSize:11,marginTop:5}}>Clique sur "Ajouter au jour" dans une recette</div>
+                <div style={{textAlign:"center",padding:"32px 20px"}}>
+                  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" style={{margin:"0 auto 14px",display:"block",opacity:0.35}}>
+                    <circle cx="40" cy="40" r="38" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                    <rect x="24" y="22" width="32" height="36" rx="4" stroke={T.textM} strokeWidth="1.5" fill="none"/>
+                    <line x1="30" y1="32" x2="50" y2="32" stroke={T.textM} strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="30" y1="38" x2="50" y2="38" stroke={T.textM} strokeWidth="1.5" strokeLinecap="round"/>
+                    <line x1="30" y1="44" x2="42" y2="44" stroke={T.textM} strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <div style={{fontSize:14,fontWeight:600,color:T.textM}}>Aucun repas enregistré</div>
+                  <div style={{fontSize:11,marginTop:5,color:T.textF}}>Clique sur "Ajouter au jour" dans une recette</div>
                 </div>
               ):(
                 dailyRecipes.map((r,i)=>{
                   const m=r.macros||computeMacros(r.ingredients);
                   return(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f5f0ea"}}>
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:`1px solid ${T.borderLL}`}}>
                       <div style={{display:"flex",alignItems:"center",gap:9}}>
                         <span style={{fontSize:19}}>{r.emoji}</span>
                         <div>
@@ -1537,7 +1652,17 @@ export default function FitWomenApp(){
                     style={{width:"100%",padding:"13px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>
                     ✓ Enregistrer
                   </button>
-                  <button onClick={()=>{setShowProfile(false);setShowOnboarding(true);setObStep(0);}} style={{width:"100%",marginTop:8,padding:"10px",background:"#f5f0ea",color:"#aaa",border:"none",borderRadius:14,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:14,padding:"12px 16px",background:T.cardAlt,borderRadius:14}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:T.text}}>🌙 Mode sombre</div>
+                      <div style={{fontSize:10,color:T.textM,marginTop:2}}>Interface sombre pour le soir</div>
+                    </div>
+                    <button onClick={()=>setDarkMode(d=>!d)}
+                      style={{width:46,height:26,borderRadius:99,background:darkMode?"#80a0d0":"rgba(120,120,130,0.3)",border:"none",cursor:"pointer",position:"relative",transition:"background 0.25s",flexShrink:0}}>
+                      <div style={{position:"absolute",top:3,left:darkMode?22:3,width:20,height:20,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 4px rgba(0,0,0,0.3)",transition:"left 0.22s ease"}}/>
+                    </button>
+                  </div>
+                  <button onClick={()=>{setShowProfile(false);setShowOnboarding(true);setObStep(0);}} style={{width:"100%",marginTop:8,padding:"10px",background:T.cardAlt,color:T.textM,border:"none",borderRadius:14,fontSize:12,fontWeight:700,cursor:"pointer"}}>
                     Refaire l'onboarding
                   </button>
                 </div>
@@ -1550,7 +1675,7 @@ export default function FitWomenApp(){
 
       {/* ── BOTTOM NAVIGATION BAR (mobile only) ── */}
       {isMobile&&(
-        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:250,background:DARK,borderTop:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 -4px 20px rgba(0,0,0,0.3)",paddingBottom:"env(safe-area-inset-bottom)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:250,background:darkMode?"#000":DARK,borderTop:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 -4px 20px rgba(0,0,0,0.3)",paddingBottom:"env(safe-area-inset-bottom)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
           <div style={{display:"flex",alignItems:"stretch",height:58}}>
             {[
               {icon:"🏠", label:"Recettes",  action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);}, active:!showWeek&&!showCart&&!showDailyPanel&&!showProfile},
