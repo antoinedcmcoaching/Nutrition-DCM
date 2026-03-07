@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 
 // ─── CIQUAL 2025 + Micronutriments ────────────────────────────────────────────
 const FOODS = {
@@ -476,8 +476,37 @@ export default function FitWomenApp(){
   const [customized,setCustomized]=useState(false);
   const [sliders,setSliders]=useState({p:35,c:35,f:15});
   const [page,setPage]=useState(1);
-  const [activeTab,setActiveTab]=useState("recette"); // recette | etapes | micros
+  const [activeTab,setActiveTab]=useState("recette");
+  const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   const PER_PAGE=20;
+
+  // Detect mobile on resize
+  useEffect(()=>{
+    const onResize=()=>setIsMobile(window.innerWidth<768);
+    window.addEventListener("resize",onResize);
+    return()=>window.removeEventListener("resize",onResize);
+  },[]);
+
+  // Swipe to close + navigate on mobile
+  const touchRef=useRef({});
+  const handleTouchStart=useCallback((e)=>{
+    touchRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};
+  },[]);
+  const handleTouchEnd=useCallback((e)=>{
+    const dx=e.changedTouches[0].clientX-touchRef.current.x;
+    const dy=e.changedTouches[0].clientY-touchRef.current.y;
+    const dt=Date.now()-touchRef.current.t;
+    if(dt>500)return;
+    // Swipe down → ferme le panneau
+    if(dy>80&&Math.abs(dx)<60){setShowDetail(false);setSelected(null);return;}
+    // Swipe gauche/droite → recette suivante/précédente
+    if(Math.abs(dx)>60&&Math.abs(dy)<80&&selected){
+      const idx=filtered.findIndex(r=>r.id===selected.id);
+      if(dx<0&&idx<filtered.length-1)selectRecipe(filtered[idx+1]);
+      if(dx>0&&idx>0)selectRecipe(filtered[idx-1]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[selected]);
 
   const filtered=useMemo(()=>ALL_RECIPES.filter(r=>
     r.goal===activeGoal&&
@@ -514,6 +543,129 @@ export default function FitWomenApp(){
 
   const gc=GOALS[activeGoal];
   const goalTotal=ALL_RECIPES.filter(r=>r.goal===activeGoal).length;
+
+  // Contenu partagé des onglets (mobile + desktop)
+  function renderDetailContent(){
+    if(!selected)return null;
+    return(<>
+      {/* TAB: RECETTE */}
+      {activeTab==="recette"&&<>
+        {adjMacros&&(
+          <div style={{background:"#faf7f4",borderRadius:16,padding:"14px 18px",marginBottom:20,display:"flex",justifyContent:"space-around",textAlign:"center"}}>
+            {[["Calories",adjMacros.cal,"kcal",ROSE],["Protéines",adjMacros.p,"g","#d4826a"],["Glucides",adjMacros.c,"g","#7a9e87"],["Lipides",adjMacros.f,"g","#b08a6e"]].map(([l,v,u,c])=>(
+              <div key={l}>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:c}}>{v}</div>
+                <div style={{fontSize:9,color:"#ccc",textTransform:"uppercase",letterSpacing:"0.07em"}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{marginBottom:22}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700}}>Ajuste les quantités</div>
+            {customized&&<button onClick={()=>{const m=computeMacros(selected.ingredients);setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});setCustomized(false);}}
+              style={{fontSize:11,color:ROSE,background:"none",border:"none",cursor:"pointer",fontWeight:700}}>↺ Reset</button>}
+          </div>
+          {adjInfo&&<>
+            <Slider label="Protéines" unit="g" value={sliders.p}
+              min={sliderRanges.p.min} max={Math.max(sliderRanges.p.min+1,sliderRanges.p.max)}
+              onChange={v=>setSlider("p",v)} color="#d4826a" disabled={!adjInfo.hasProtein}/>
+            <Slider label="Glucides"  unit="g" value={sliders.c}
+              min={sliderRanges.c.min} max={Math.max(sliderRanges.c.min+1,sliderRanges.c.max)}
+              onChange={v=>setSlider("c",v)} color="#7a9e87" disabled={!adjInfo.hasCarb}/>
+            <Slider label="Lipides"   unit="g" value={sliders.f}
+              min={sliderRanges.f.min} max={Math.max(sliderRanges.f.min+1,sliderRanges.f.max)}
+              onChange={v=>setSlider("f",v)} color="#b08a6e" disabled={!adjInfo.hasFat}/>
+          </>}
+        </div>
+        {adjIngredients&&(
+          <div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:14}}>
+              Ingrédients {customized&&<span style={{fontSize:10,color:ROSE,fontFamily:"'Jost',sans-serif",fontWeight:500}}>· ajustés</span>}
+            </div>
+            {Object.entries(adjIngredients).map(([key,grams])=>{
+              const food=FOODS[key]; if(!food)return null; const s=grams/100;
+              return(
+                <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid #f5f0ea"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:20}}>{food.emoji}</span>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:DARK}}>{food.name}</div>
+                      <div style={{fontSize:10,color:"#ccc",marginTop:1}}>{Math.round(food.cal*s)} kcal · P:{Math.round(food.p*s)}g · G:{Math.round(food.c*s)}g · L:{Math.round(food.f*s)}g</div>
+                    </div>
+                  </div>
+                  <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:14,borderRadius:10,padding:"4px 12px",fontFamily:"'Cormorant Garamond',serif",flexShrink:0,marginLeft:10}}>{grams}g</div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </>}
+
+      {/* TAB: ÉTAPES */}
+      {activeTab==="etapes"&&(
+        <div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Étapes de préparation</div>
+          <p style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.5}}>{selected.desc}</p>
+          {selected.steps&&selected.steps.length>0?(
+            selected.steps.map((step,i)=>(
+              <div key={i} style={{display:"flex",gap:14,marginBottom:16,animation:`fadeIn 0.3s ease ${i*0.05}s both`}}>
+                <div style={{width:28,height:28,borderRadius:"50%",background:DARK,color:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:13,fontWeight:700,flexShrink:0,marginTop:2}}>{i+1}</div>
+                <div style={{background:"#faf7f4",borderRadius:14,padding:"12px 15px",flex:1,fontSize:13,color:"#444",lineHeight:1.6}}>{step}</div>
+              </div>
+            ))
+          ):(
+            <div style={{textAlign:"center",padding:"30px",color:"#ccc",fontSize:13}}>Étapes de préparation à venir</div>
+          )}
+          <div style={{marginTop:20,background:"#fdf8f3",borderRadius:14,padding:"14px 16px",border:`1px solid ${ROSE}22`}}>
+            <div style={{fontSize:11,fontWeight:700,color:ROSE,marginBottom:6}}>💡 Conseil nutrition</div>
+            <div style={{fontSize:11,color:"#aaa",lineHeight:1.6}}>
+              {selected.goal==="seche"?"Peser les ingrédients pour rester dans ton déficit calorique. Chaque gramme compte en sèche !":
+               selected.goal==="muscle"?"Ne pas rogner sur les portions — le surplus calorique est indispensable à la prise de masse propre.":
+               "Écoute tes sensations de faim et de satiété. Le maintien c'est aussi l'écoute de ton corps."}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: MICRONUTRIMENTS */}
+      {activeTab==="micros"&&adjMicros&&(
+        <div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Micronutriments clés</div>
+          <p style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.5}}>Apports pour cette recette et % des besoins journaliers recommandés.</p>
+          {Object.entries(MICRO_INFO).map(([key,info])=>{
+            const val=adjMicros[key]; const pct=Math.min(100,Math.round((val/info.rdi)*100));
+            const isGood=pct>=20; const isGreat=pct>=50;
+            return(
+              <div key={key} style={{marginBottom:16,padding:"14px 16px",background:"#faf7f4",borderRadius:14}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:18}}>{info.icon}</span>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:DARK}}>{info.label}</div>
+                      <div style={{fontSize:10,color:"#bbb"}}>AJR : {info.rdi}{info.unit}</div>
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:isGreat?"#6b9e72":isGood?info.color:"#ccc"}}>{val}{info.unit}</div>
+                    <div style={{fontSize:9,color:isGreat?"#6b9e72":isGood?info.color:"#ccc",fontWeight:700}}>{pct}% AJR</div>
+                  </div>
+                </div>
+                <div style={{height:5,background:"#ede7e0",borderRadius:999}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:isGreat?"linear-gradient(90deg,#a8d4ae,#6b9e72)":isGood?`linear-gradient(90deg,${ROSE_L},${info.color})`:"#e8e2db",borderRadius:999,transition:"width 0.5s ease"}}/>
+                </div>
+              </div>
+            );
+          })}
+          <div style={{marginTop:16,padding:"12px 16px",background:"#fdf8f3",borderRadius:14,border:`1px solid ${ROSE}22`}}>
+            <div style={{fontSize:10,color:"#bbb",lineHeight:1.6}}>
+              <strong style={{color:"#aaa"}}>Sources :</strong> Table Ciqual 2025 (Anses). AJR = Apports Journaliers Recommandés pour femme adulte active.
+            </div>
+          </div>
+        </div>
+      )}
+    </>);
+  }
 
   return(
     <div style={{minHeight:"100vh",background:"#f9f6f2",fontFamily:"'Jost',sans-serif",color:DARK}}>
@@ -569,10 +721,10 @@ export default function FitWomenApp(){
         </div>
 
         {/* MAIN GRID */}
-        <div style={{display:"grid",gridTemplateColumns:showDetail?"1fr 460px":"1fr",gap:24,alignItems:"start"}}>
+        <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr 460px":"1fr",gap:24,alignItems:"start"}}>
           {/* RECIPE CARDS */}
           <div>
-            <div style={{display:"grid",gridTemplateColumns:showDetail?"1fr":"repeat(auto-fill,minmax(320px,1fr))",gap:16}}>
+            <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:16}}>
               {paginated.map((r,i)=>{
                 const m=computeMacros(r.ingredients); const isSel=selected?.id===r.id; const gc2=GOALS[r.goal];
                 return(
@@ -622,9 +774,56 @@ export default function FitWomenApp(){
 
           {/* DETAIL PANEL */}
           {showDetail&&selected&&(
+            isMobile?(
+              // MOBILE: overlay bottom sheet
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+                {/* Backdrop */}
+                <div onClick={()=>{setShowDetail(false);setSelected(null);}}
+                  style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}}/>
+                {/* Sheet */}
+                <div style={{position:"relative",background:"#fff",borderRadius:"24px 24px 0 0",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 -8px 40px rgba(0,0,0,0.18)",animation:"slideUp 0.28s ease"}}>
+                  <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
+                  {/* Drag handle */}
+                  <div style={{display:"flex",justifyContent:"center",padding:"12px 0 4px"}}>
+                    <div style={{width:40,height:4,borderRadius:99,background:"#e0d8d0"}}/>
+                  </div>
+                  {/* Swipe hint */}
+                  <div style={{textAlign:"center",fontSize:9,color:"#ccc",letterSpacing:"0.1em",marginBottom:4}}>GLISSER BAS POUR FERMER · GAUCHE/DROITE POUR NAVIGUER</div>
+                  {/* Header */}
+                  <div style={{background:DARK,padding:"16px 20px"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                      <div style={{display:"flex",gap:10,alignItems:"flex-start",flex:1}}>
+                        <span style={{fontSize:28,flexShrink:0}}>{selected.emoji}</span>
+                        <div>
+                          <div style={{fontSize:9,color:ROSE,textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:3}}>{GOALS[selected.goal].label} · {selected.meal}</div>
+                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:"#fff",lineHeight:1.2}}>{selected.name}</div>
+                        </div>
+                      </div>
+                      <button onClick={()=>{setShowDetail(false);setSelected(null);}}
+                        style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#aaa",borderRadius:10,width:32,height:32,cursor:"pointer",fontSize:15,flexShrink:0,marginLeft:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      {[["recette","📊 Recette"],["etapes","👨‍🍳 Prépa"],["micros","🔬 Micros"]].map(([tab,label])=>(
+                        <button key={tab} onClick={()=>setActiveTab(tab)}
+                          style={{flex:1,padding:"8px 4px",border:`1px solid ${activeTab===tab?ROSE:"rgba(255,255,255,0.1)"}`,borderRadius:10,background:activeTab===tab?ROSE+"22":"transparent",color:activeTab===tab?ROSE:"#666",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s"}}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Content scrollable */}
+                  <div style={{overflowY:"auto",padding:"20px 20px 40px",flex:1}}>
+                    {renderDetailContent()}
+                  </div>
+                </div>
+              </div>
+            ):(
+            // DESKTOP: sticky side panel
             <div style={{position:"sticky",top:76}}>
               <div style={{background:"#fff",border:"1.5px solid #ede8e3",borderRadius:24,overflow:"hidden",boxShadow:"0 12px 60px rgba(201,168,130,0.18)"}}>
-
                 {/* Header */}
                 <div style={{background:DARK,padding:"22px 24px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
@@ -638,8 +837,6 @@ export default function FitWomenApp(){
                     <button onClick={()=>{setShowDetail(false);setSelected(null);}}
                       style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#777",borderRadius:10,width:32,height:32,cursor:"pointer",fontSize:15,flexShrink:0,marginLeft:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                   </div>
-
-                  {/* TABS */}
                   <div style={{display:"flex",gap:6,marginTop:14}}>
                     {[["recette","📊 Recette"],["etapes","👨‍🍳 Préparation"],["micros","🔬 Micronutriments"]].map(([tab,label])=>(
                       <button key={tab} onClick={()=>setActiveTab(tab)}
@@ -649,137 +846,14 @@ export default function FitWomenApp(){
                     ))}
                   </div>
                 </div>
-
-                {/* CONTENT */}
                 <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto",padding:"20px 24px"}}>
-
-                  {/* TAB: RECETTE */}
-                  {activeTab==="recette"&&<>
-                    {/* Macros summary */}
-                    {adjMacros&&(
-                      <div style={{background:"#faf7f4",borderRadius:16,padding:"14px 18px",marginBottom:20,display:"flex",justifyContent:"space-around",textAlign:"center"}}>
-                        {[["Calories",adjMacros.cal,"kcal",ROSE],["Protéines",adjMacros.p,"g","#d4826a"],["Glucides",adjMacros.c,"g","#7a9e87"],["Lipides",adjMacros.f,"g","#b08a6e"]].map(([l,v,u,c])=>(
-                          <div key={l}>
-                            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:c}}>{v}</div>
-                            <div style={{fontSize:9,color:"#ccc",textTransform:"uppercase",letterSpacing:"0.07em"}}>{l}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Sliders */}
-                    <div style={{marginBottom:22}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700}}>Ajuste les quantités</div>
-                        {customized&&<button onClick={()=>{const m=computeMacros(selected.ingredients);setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});setCustomized(false);}}
-                          style={{fontSize:11,color:ROSE,background:"none",border:"none",cursor:"pointer",fontWeight:700}}>↺ Reset</button>}
-                      </div>
-                      {adjInfo&&<>
-                        <Slider label="Protéines" unit="g" value={sliders.p}
-                          min={sliderRanges.p.min} max={Math.max(sliderRanges.p.min+1,sliderRanges.p.max)}
-                          onChange={v=>setSlider("p",v)} color="#d4826a" disabled={!adjInfo.hasProtein}/>
-                        <Slider label="Glucides"  unit="g" value={sliders.c}
-                          min={sliderRanges.c.min} max={Math.max(sliderRanges.c.min+1,sliderRanges.c.max)}
-                          onChange={v=>setSlider("c",v)} color="#7a9e87" disabled={!adjInfo.hasCarb}/>
-                        <Slider label="Lipides"   unit="g" value={sliders.f}
-                          min={sliderRanges.f.min} max={Math.max(sliderRanges.f.min+1,sliderRanges.f.max)}
-                          onChange={v=>setSlider("f",v)} color="#b08a6e" disabled={!adjInfo.hasFat}/>
-                      </>}
-                    </div>
-
-                    {/* Ingredients */}
-                    {adjIngredients&&(
-                      <div>
-                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:14}}>
-                          Ingrédients {customized&&<span style={{fontSize:10,color:ROSE,fontFamily:"'Jost',sans-serif",fontWeight:500}}>· ajustés</span>}
-                        </div>
-                        {Object.entries(adjIngredients).map(([key,grams])=>{
-                          const food=FOODS[key]; if(!food)return null; const s=grams/100;
-                          return(
-                            <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid #f5f0ea"}}>
-                              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                                <span style={{fontSize:20}}>{food.emoji}</span>
-                                <div>
-                                  <div style={{fontSize:13,fontWeight:600,color:DARK}}>{food.name}</div>
-                                  <div style={{fontSize:10,color:"#ccc",marginTop:1}}>{Math.round(food.cal*s)} kcal · P:{Math.round(food.p*s)}g · G:{Math.round(food.c*s)}g · L:{Math.round(food.f*s)}g</div>
-                                </div>
-                              </div>
-                              <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:14,borderRadius:10,padding:"4px 12px",fontFamily:"'Cormorant Garamond',serif",flexShrink:0,marginLeft:10}}>{grams}g</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>}
-
-                  {/* TAB: ÉTAPES */}
-                  {activeTab==="etapes"&&(
-                    <div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Étapes de préparation</div>
-                      <p style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.5}}>{selected.desc}</p>
-                      {selected.steps&&selected.steps.length>0?(
-                        selected.steps.map((step,i)=>(
-                          <div key={i} style={{display:"flex",gap:14,marginBottom:16,animation:`fadeIn 0.3s ease ${i*0.05}s both`}}>
-                            <div style={{width:28,height:28,borderRadius:"50%",background:DARK,color:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:13,fontWeight:700,flexShrink:0,marginTop:2}}>{i+1}</div>
-                            <div style={{background:"#faf7f4",borderRadius:14,padding:"12px 15px",flex:1,fontSize:13,color:"#444",lineHeight:1.6}}>{step}</div>
-                          </div>
-                        ))
-                      ):(
-                        <div style={{textAlign:"center",padding:"30px",color:"#ccc",fontSize:13}}>Étapes de préparation à venir</div>
-                      )}
-                      <div style={{marginTop:20,background:"#fdf8f3",borderRadius:14,padding:"14px 16px",border:`1px solid ${ROSE}22`}}>
-                        <div style={{fontSize:11,fontWeight:700,color:ROSE,marginBottom:6}}>💡 Conseil nutrition</div>
-                        <div style={{fontSize:11,color:"#aaa",lineHeight:1.6}}>
-                          {selected.goal==="seche"?"Peser les ingrédients pour rester dans ton déficit calorique. Chaque gramme compte en sèche !":
-                           selected.goal==="muscle"?"Ne pas rogner sur les portions — le surplus calorique est indispensable à la prise de masse propre.":
-                           "Écoute tes sensations de faim et de satiété. Le maintien c'est aussi l'écoute de ton corps."}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB: MICRONUTRIMENTS */}
-                  {activeTab==="micros"&&adjMicros&&(
-                    <div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Micronutriments clés</div>
-                      <p style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.5}}>Apports pour cette recette et % des besoins journaliers recommandés.</p>
-                      {Object.entries(MICRO_INFO).map(([key,info])=>{
-                        const val=adjMicros[key]; const pct=Math.min(100,Math.round((val/info.rdi)*100));
-                        const isGood=pct>=20; const isGreat=pct>=50;
-                        return(
-                          <div key={key} style={{marginBottom:16,padding:"14px 16px",background:"#faf7f4",borderRadius:14,animation:`fadeIn 0.3s ease both`}}>
-                            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                                <span style={{fontSize:18}}>{info.icon}</span>
-                                <div>
-                                  <div style={{fontSize:12,fontWeight:700,color:DARK}}>{info.label}</div>
-                                  <div style={{fontSize:10,color:"#bbb"}}>AJR : {info.rdi}{info.unit}</div>
-                                </div>
-                              </div>
-                              <div style={{textAlign:"right"}}>
-                                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:isGreat?"#6b9e72":isGood?info.color:"#ccc"}}>
-                                  {val}{info.unit}
-                                </div>
-                                <div style={{fontSize:9,color:isGreat?"#6b9e72":isGood?info.color:"#ccc",fontWeight:700}}>{pct}% AJR</div>
-                              </div>
-                            </div>
-                            <div style={{height:5,background:"#ede7e0",borderRadius:999}}>
-                              <div style={{height:"100%",width:`${pct}%`,background:isGreat?"linear-gradient(90deg,#a8d4ae,#6b9e72)":isGood?`linear-gradient(90deg,${ROSE_L},${info.color})`:"#e8e2db",borderRadius:999,transition:"width 0.5s ease"}}/>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div style={{marginTop:16,padding:"12px 16px",background:"#fdf8f3",borderRadius:14,border:`1px solid ${ROSE}22`}}>
-                        <div style={{fontSize:10,color:"#bbb",lineHeight:1.6}}>
-                          <strong style={{color:"#aaa"}}>Sources :</strong> Table Ciqual 2025 (Anses). AJR = Apports Journaliers Recommandés pour femme adulte active. Les valeurs sont indicatives — consultez un professionnel de santé pour un suivi personnalisé.
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {renderDetailContent()}
                 </div>
               </div>
             </div>
+            )
           )}
+
         </div>
       </div>
     </div>
