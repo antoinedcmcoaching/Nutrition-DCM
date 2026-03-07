@@ -597,10 +597,26 @@ export default function FitWomenApp(){
   // ── Budget calorique ──
   const addToDay=(recipe,e)=>{
     e?.stopPropagation();
-    setDailyRecipes(d=>[...d,{...recipe,addedAt:Date.now()}]);
+    // Sauvegarde les ingrédients AJUSTÉS (sliders) + snapshot macros précis (sans double arrondi)
+    const ing=adjIngredients||recipe.ingredients;
+    const snap=computeMacros(ing); // 1 seul calcul → pas d'accumulation d'erreurs
+    setDailyRecipes(d=>[...d,{
+      id:recipe.id, name:recipe.name, emoji:recipe.emoji, meal:recipe.meal,
+      ingredients:ing,
+      macros:snap,   // snapshot figé au moment de l'ajout
+      addedAt:Date.now()
+    }]);
   };
   const removeFromDay=(idx)=>setDailyRecipes(d=>d.filter((_,i)=>i!==idx));
-  const dailyCal=useMemo(()=>dailyRecipes.reduce((s,r)=>s+computeMacros(r.ingredients).cal,0),[dailyRecipes]);
+  // Totaux journaliers — calculés depuis les snapshots figés (pas de double arrondi)
+  const dailyTotals=useMemo(()=>dailyRecipes.reduce(
+    (acc,r)=>{
+      const m=r.macros||computeMacros(r.ingredients); // fallback si ancien format
+      return{cal:acc.cal+m.cal, p:acc.p+m.p, c:acc.c+m.c, f:acc.f+m.f};
+    },
+    {cal:0,p:0,c:0,f:0}
+  ),[dailyRecipes]);
+  const dailyCal=Math.round(dailyTotals.cal);
   const dailyPct=Math.min(100,Math.round((dailyCal/dailyGoal)*100));
   const remaining=Math.max(0,dailyGoal-dailyCal);
 
@@ -1072,19 +1088,16 @@ export default function FitWomenApp(){
                 </div>
               </div>
               {/* Macros du jour */}
-              {dailyRecipes.length>0&&(()=>{
-                const tot=dailyRecipes.reduce((acc,r)=>{const m=computeMacros(r.ingredients);return{p:acc.p+m.p,c:acc.c+m.c,f:acc.f+m.f};},{p:0,c:0,f:0});
-                return(
+              {dailyRecipes.length>0&&(
                   <div style={{display:"flex",gap:12,justifyContent:"center"}}>
-                    {[["P",Math.round(tot.p),"#d4826a"],["G",Math.round(tot.c),"#7a9e87"],["L",Math.round(tot.f),"#b08a6e"]].map(([l,v,c])=>(
+                    {[["P",Math.round(dailyTotals.p),"#d4826a"],["G",Math.round(dailyTotals.c),"#7a9e87"],["L",Math.round(dailyTotals.f),"#b08a6e"]].map(([l,v,c])=>(
                       <div key={l} style={{textAlign:"center"}}>
                         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:c}}>{v}g</div>
                         <div style={{fontSize:9,color:"#666",textTransform:"uppercase"}}>{l}</div>
                       </div>
                     ))}
                   </div>
-                );
-              })()}
+              )}
             </div>
             <div style={{overflowY:"auto",padding:"16px 20px 40px",flex:1}}>
               {dailyRecipes.length===0?(
@@ -1095,7 +1108,7 @@ export default function FitWomenApp(){
                 </div>
               ):(
                 dailyRecipes.map((r,i)=>{
-                  const m=computeMacros(r.ingredients);
+                  const m=r.macros||computeMacros(r.ingredients);
                   return(
                     <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid #f5f0ea"}}>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
