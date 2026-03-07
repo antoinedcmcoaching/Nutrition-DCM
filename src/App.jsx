@@ -1061,7 +1061,7 @@ export default function FitWomenApp(){
         {/* ── GOAL TABS ── */}
         <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
-            <button key={key} onClick={{()=>{
+            <button key={key} onClick={()=>{
                 const order=["seche","maintien","muscle"];
                 const prev=prevGoalRef.current;
                 const fromIdx=order.indexOf(prev);
