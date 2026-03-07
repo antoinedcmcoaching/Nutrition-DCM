@@ -517,10 +517,14 @@ const emptyWeek=()=>Object.fromEntries(DAYS.map(d=>[d,Object.fromEntries(SLOTS.m
 const getTags=(r)=>{
   const m=computeMacros(r.ingredients);
   const tags=[];
-  if(m.p/m.cal>0.24)tags.push("💪 Haute protéine");
-  if(m.cal<320)tags.push("⚡ Léger");
-  if(r.steps&&r.steps.length<=3)tags.push("🕐 Rapide");
-  if(Object.keys(r.ingredients).some(k=>["lentilles","pois_chiches","haricots","quinoa"].includes(k)))tags.push("🌱 Végétarien");
+  // Haute protéine : ratio protéines/calories > 30% (en éq. calorique)
+  if(m.cal>0&&(m.p*4/m.cal)>0.30)tags.push("💪 Haute protéine");
+  // Léger : moins de 450 kcal
+  if(m.cal<450)tags.push("⚡ Léger");
+  // Rapide : 5 étapes ou moins (standard) et pas de viande à cuire longtemps
+  if(!Object.keys(r.ingredients).some(k=>["boeuf","lentilles","pois_chiches","haricots","riz_complet"].includes(k)))tags.push("🕐 Rapide");
+  // Végétarien : pas de viande/poisson
+  if(!Object.keys(r.ingredients).some(k=>["poulet","dinde","saumon","thon","crevettes","cabillaud","boeuf"].includes(k)))tags.push("🌱 Végétarien");
   return tags;
 };
 const ALL_TAGS=["💪 Haute protéine","⚡ Léger","🕐 Rapide","🌱 Végétarien"];
@@ -903,17 +907,22 @@ export default function FitWomenApp(){
           <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
             {/* Semainier */}
             <button onClick={()=>setShowWeek(true)}
-              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
               📆
             </button>
-            {/* Budget */}
+            {/* Budget journalier — redesigné pour lisibilité */}
             <button onClick={()=>setShowDailyPanel(true)}
-              style={{display:"flex",flexDirection:"column",alignItems:"center",background:"rgba(255,255,255,0.06)",border:`1px solid ${dailyPct>90?"#e8a0a0":dailyPct>0?"#a0c8a0":"rgba(255,255,255,0.1)"}`,borderRadius:10,padding:"4px 9px",cursor:"pointer",minWidth:58}}>
-              <div style={{fontSize:10,fontWeight:700,color:dailyPct>90?"#e88080":dailyPct>0?"#90c090":"#666",lineHeight:1}}>{dailyCal}</div>
-              <div style={{width:42,height:3,background:"#333",borderRadius:99,margin:"3px 0",overflow:"hidden"}}>
-                <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#e88080":"#90c090",borderRadius:99}}/>
+              style={{display:"flex",alignItems:"center",gap:8,background:dailyPct>90?"rgba(232,128,128,0.15)":dailyPct>0?"rgba(144,210,144,0.12)":"rgba(255,255,255,0.06)",border:`1px solid ${dailyPct>90?"rgba(232,128,128,0.5)":dailyPct>0?"rgba(144,210,144,0.4)":"rgba(255,255,255,0.12)"}`,borderRadius:10,padding:"6px 11px",cursor:"pointer",minWidth:0}}>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3}}>
+                <div style={{display:"flex",alignItems:"baseline",gap:4}}>
+                  <span style={{fontSize:13,fontWeight:800,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#fff",fontFamily:"'Cormorant Garamond',serif",lineHeight:1}}>{dailyCal}</span>
+                  <span style={{fontSize:9,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#888",lineHeight:1}}>/ {dailyGoalKcal} kcal</span>
+                </div>
+                <div style={{width:64,height:3,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#f08080":dailyPct>50?"#e8d080":"#80d080",borderRadius:99,transition:"width 0.4s"}}/>
+                </div>
+                <span style={{fontSize:8,fontWeight:600,color:dailyPct>90?"#f08080":remaining>0?"#80c080":"#80d080",lineHeight:1,whiteSpace:"nowrap"}}>{dailyPct>100?`⚠ +${dailyCal-dailyGoalKcal} kcal`:remaining>0?`${remaining} kcal restantes`:"✓ Objectif atteint"}</span>
               </div>
-              <div style={{fontSize:8,color:"#444",lineHeight:1}}>{remaining>0?`-${remaining}`:"✓"} kcal</div>
             </button>
             {/* Panier */}
             <button onClick={()=>setShowCart(true)}
