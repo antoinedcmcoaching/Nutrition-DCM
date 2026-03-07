@@ -1420,8 +1420,7 @@ export default function FitWomenApp(){
           <div onClick={()=>setShowProfile(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)"}}/>
           <div style={{position:"relative",background:"#fff",borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,animation:"slideUp 0.28s ease"}}>
             <div style={{padding:"12px 20px 0",display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/></div>
-            {(true&&(
-                <div style={{padding:"20px 24px 36px"}}>
+            <div style={{padding:"20px 24px 36px"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
                     <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700}}>👤 Mon profil</div>
                     <button onClick={()=>setShowProfile(false)} style={{background:"#f5f0ea",border:"none",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",color:"#aaa"}}>✕</button>
@@ -1459,8 +1458,6 @@ export default function FitWomenApp(){
                     Refaire l'onboarding
                   </button>
                 </div>
-              );
-            })()}
           </div>
         </div>
       )}
