@@ -542,6 +542,8 @@ export default function FitWomenApp(){
   const [page,setPage]=useState(1);
   const [activeTab,setActiveTab]=useState("recette");
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
+  const [isLoading,setIsLoading]=useState(false);
+  const loadingTimer=useRef(null);
 
   // ── Onboarding / Profil ──
   const [profile,setProfile]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_profile")||"null")||{done:false,name:"",goal:"seche",calTarget:1600};}catch{return{done:false,name:"",goal:"seche",calTarget:1600};}});
@@ -609,7 +611,13 @@ export default function FitWomenApp(){
   useEffect(()=>{if(showProfile){setPName(profile.name||"");setPGoal(profile.goal||"seche");setPCal(profile.calTarget||1600);}},[showProfile]);
 
   // Scroll to top on filter change
-  useEffect(()=>{listRef.current?.scrollTo(0,0);window.scrollTo(0,0);},[activeGoal,activeMeal]);
+  useEffect(()=>{
+    listRef.current?.scrollTo(0,0);window.scrollTo(0,0);
+    setIsLoading(true);
+    if(loadingTimer.current)clearTimeout(loadingTimer.current);
+    loadingTimer.current=setTimeout(()=>setIsLoading(false),420);
+    return()=>{if(loadingTimer.current)clearTimeout(loadingTimer.current);};
+  },[activeGoal,activeMeal]);
 
   // ── Filtrage + Tri ──
   const filtered=useMemo(()=>{
@@ -890,13 +898,16 @@ export default function FitWomenApp(){
         @keyframes slideFromRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes slideFromLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes fadeInScale{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+        @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
         @media(max-width:400px){.budget-label{display:none!important}.budget-bar-wrap{width:48px!important}}
+        @media(max-width:767px){.header-icon-hide{display:none!important}}
         button{-webkit-tap-highlight-color:transparent}
         button:active{opacity:0.82;transform:scale(0.97)}
+        .skeleton{background:linear-gradient(90deg,#f0ebe4 25%,#faf6f1 50%,#f0ebe4 75%);background-size:400px 100%;animation:shimmer 1.4s infinite linear;border-radius:10px}
       `}</style>
 
       {/* ── HEADER ── */}
-      <div style={{background:DARK,padding:"14px 20px",position:"sticky",top:0,zIndex:200,boxShadow:"0 2px 24px rgba(0,0,0,0.4)",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+      <div style={{background:DARK,padding:"14px 20px",position:"sticky",top:0,zIndex:200,boxShadow:"0 2px 24px rgba(0,0,0,0.4)",borderBottom:"1px solid rgba(255,255,255,0.06)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
         <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
           {/* Logo + titre */}
           <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
@@ -913,8 +924,8 @@ export default function FitWomenApp(){
           </div>
           {/* Actions — version mobile compacte / desktop complète */}
           <div style={{display:"flex",gap:7,alignItems:"center",flexShrink:0}}>
-            {/* Semainier */}
-            <button onClick={()=>setShowWeek(true)} title="Semainier"
+            {/* Semainier - masqué mobile (bottom nav) */}
+            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
               style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               📆
             </button>
@@ -935,14 +946,14 @@ export default function FitWomenApp(){
                 </span>
               </div>
             </button>
-            {/* Panier */}
-            <button onClick={()=>setShowCart(true)} title="Liste de courses"
+            {/* Panier - masqué mobile (bottom nav) */}
+            <button onClick={()=>setShowCart(true)} title="Liste de courses" className="header-icon-hide"
               style={{position:"relative",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               🛒
               {cart.length>0&&<div style={{position:"absolute",top:-5,right:-5,width:17,height:17,borderRadius:"50%",background:ROSE,color:"#fff",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>{cart.length}</div>}
             </button>
-            {/* Profil */}
-            <button onClick={()=>setShowProfile(true)} title="Mon profil"
+            {/* Profil - masqué mobile (bottom nav) */}
+            <button onClick={()=>setShowProfile(true)} title="Mon profil" className="header-icon-hide"
               style={{background:"rgba(255,255,255,0.08)",border:`1.5px solid ${ROSE}66`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               👤
             </button>
@@ -1044,7 +1055,21 @@ export default function FitWomenApp(){
         <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr 450px":"1fr",gap:22,alignItems:"start"}}>
           <div ref={listRef}>
             <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr":"repeat(auto-fill,minmax(290px,1fr))",gap:12}}>
-              {paginated.map((r,i)=>{
+              {isLoading?Array.from({length:6}).map((_,i)=>(
+                <div key={i} style={{background:"#fff",borderRadius:18,padding:"16px 18px",border:"1.5px solid #ede8e0"}}>
+                  <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center"}}>
+                    <div className="skeleton" style={{width:28,height:28,borderRadius:"50%",flexShrink:0}}/>
+                    <div className="skeleton" style={{width:70,height:16,borderRadius:8}}/>
+                  </div>
+                  <div className="skeleton" style={{width:"80%",height:18,borderRadius:8,marginBottom:8}}/>
+                  <div className="skeleton" style={{width:"55%",height:14,borderRadius:8,marginBottom:14}}/>
+                  <div style={{display:"flex",gap:8,paddingTop:10,borderTop:"1px solid #f5f0ea"}}>
+                    <div className="skeleton" style={{width:50,height:20,borderRadius:8}}/>
+                    <div className="skeleton" style={{width:36,height:20,borderRadius:8}}/>
+                    <div className="skeleton" style={{width:36,height:20,borderRadius:8}}/>
+                  </div>
+                </div>
+              )):paginated.map((r,i)=>{
                 const m=computeMacros(r.ingredients);const isSel=selected?.id===r.id;const gc2=GOALS[r.goal];const isFav=favorites.includes(r.id);
                 const tags=getTags(r);
                 // Teinte de fond subtile selon l'objectif
@@ -1105,7 +1130,7 @@ export default function FitWomenApp(){
               <span style={{fontSize:13}}>📋</span>
               <span style={{fontSize:10,color:"#bbb"}}>Valeurs issues de la <strong style={{color:"#aaa"}}>Table Ciqual 2025</strong> (Anses)</span>
             </div>
-            <div style={{height:36}}/>
+            <div style={{height:isMobile?90:36}}/>
           </div>
           {/* Desktop panel */}
           {!isMobile&&showDetail&&selected&&(
@@ -1130,7 +1155,7 @@ export default function FitWomenApp(){
               <div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/>
             </div>
             <SheetHeader/>
-            <div style={{overflowY:"auto",padding:"16px 16px 48px",flex:1,WebkitOverflowScrolling:"touch"}}>
+            <div style={{overflowY:"auto",padding:"16px 16px 80px",flex:1,WebkitOverflowScrolling:"touch"}}>
               {renderDetailContent()}
             </div>
           </div>
@@ -1194,9 +1219,13 @@ export default function FitWomenApp(){
                   const tot=weekDayTotal(d);
                   return(
                     <button key={d} onClick={()=>setWeekDay(d)}
-                      style={{flexShrink:0,padding:"6px 10px",border:`1.5px solid ${weekDay===d?ROSE:"rgba(255,255,255,0.1)"}`,borderRadius:10,background:weekDay===d?"rgba(201,168,130,0.15)":"transparent",color:weekDay===d?ROSE:"#666",cursor:"pointer",textAlign:"center",minWidth:46}}>
+                      style={{flexShrink:0,padding:"6px 10px 5px",border:`1.5px solid ${weekDay===d?ROSE:"rgba(255,255,255,0.1)"}`,borderRadius:10,background:weekDay===d?"rgba(201,168,130,0.15)":"transparent",color:weekDay===d?ROSE:"#666",cursor:"pointer",textAlign:"center",minWidth:46,position:"relative",overflow:"hidden"}}>
                       <div style={{fontSize:10,fontWeight:700}}>{d}</div>
-                      <div style={{fontSize:8,color:tot>0?(weekDay===d?ROSE:"#888"):"#444",marginTop:1}}>{tot>0?`${tot}k`:"-"}</div>
+                      <div style={{fontSize:8,color:tot>0?(weekDay===d?ROSE:"#999"):"#444",marginTop:1,marginBottom:4}}>{tot>0?`${Math.round(tot/100)/10}k`:"-"}</div>
+                      {/* Barre progression vs objectif */}
+                      <div style={{position:"absolute",bottom:0,left:0,right:0,height:3,background:"rgba(255,255,255,0.06)"}}>
+                        {tot>0&&<div style={{height:"100%",width:`${Math.min(100,Math.round(tot/dailyGoalKcal*100))}%`,background:tot>dailyGoalKcal?"#f08080":tot/dailyGoalKcal>0.8?"#e8d070":"#80d080",borderRadius:99,transition:"width 0.3s"}}/>}
+                      </div>
                     </button>
                   );
                 })}
@@ -1518,6 +1547,31 @@ export default function FitWomenApp(){
 
       {/* Fermer le dropdown tri au clic extérieur */}
       {showSortPanel&&<div style={{position:"fixed",inset:0,zIndex:90}} onClick={()=>setShowSortPanel(false)}/>}
+
+      {/* ── BOTTOM NAVIGATION BAR (mobile only) ── */}
+      {isMobile&&(
+        <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:250,background:DARK,borderTop:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 -4px 20px rgba(0,0,0,0.3)",paddingBottom:"env(safe-area-inset-bottom)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
+          <div style={{display:"flex",alignItems:"stretch",height:58}}>
+            {[
+              {icon:"🏠", label:"Recettes",  action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);}, active:!showWeek&&!showCart&&!showDailyPanel&&!showProfile},
+              {icon:"📆", label:"Semainier", action:()=>setShowWeek(true),  active:showWeek,  badge:null},
+              {icon:"📅", label:"Journal",   action:()=>setShowDailyPanel(true), active:showDailyPanel,
+                badge:dailyCal>0?<div style={{position:"absolute",top:6,right:"50%",transform:"translateX(calc(50% + 8px))",background:dailyPct>100?"#f08080":"#80d080",borderRadius:99,padding:"1px 5px",fontSize:7,fontWeight:800,color:"#fff",lineHeight:1.4}}>{dailyPct}%</div>:null},
+              {icon:"🛒", label:"Courses",   action:()=>setShowCart(true),  active:showCart,
+                badge:cart.length>0?<div style={{position:"absolute",top:6,right:"50%",transform:"translateX(calc(50% + 8px))",width:14,height:14,borderRadius:"50%",background:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:"#fff"}}>{cart.length}</div>:null},
+              {icon:"👤", label:"Profil",    action:()=>setShowProfile(true), active:showProfile, badge:null},
+            ].map(({icon,label,action,active,badge})=>(
+              <button key={label} onClick={action}
+                style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,border:"none",background:"transparent",cursor:"pointer",padding:"6px 0",position:"relative",transition:"all 0.15s"}}>
+                {badge}
+                <span style={{fontSize:20,lineHeight:1,filter:active?"none":"grayscale(0.4)",opacity:active?1:0.45,transition:"all 0.15s"}}>{icon}</span>
+                <span style={{fontSize:9,fontWeight:active?700:500,color:active?ROSE:"rgba(255,255,255,0.35)",letterSpacing:"0.04em",lineHeight:1,transition:"all 0.15s"}}>{label}</span>
+                {active&&<div style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:20,height:2,borderRadius:99,background:ROSE}}/>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
