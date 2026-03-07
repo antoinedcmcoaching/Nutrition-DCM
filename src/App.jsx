@@ -506,9 +506,28 @@ function Slider({label,unit,value,min,max,step=1,onChange,color,disabled}){
   );
 }
 
+// ─── CONSTANTES SEMAINIER ─────────────────────────────────────────────────────
+const DAYS=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const DAYLABELS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+const SLOTS=["Petit-déjeuner","Déjeuner","Dîner","Collation"];
+const SLOT_ICONS={"Petit-déjeuner":"☀️","Déjeuner":"🌤️","Dîner":"🌙","Collation":"🍎"};
+const emptyWeek=()=>Object.fromEntries(DAYS.map(d=>[d,Object.fromEntries(SLOTS.map(s=>[s,[]]))]))
+
+// Tags auto-calculés sur les recettes
+const getTags=(r)=>{
+  const m=computeMacros(r.ingredients);
+  const tags=[];
+  if(m.p/m.cal>0.24)tags.push("💪 Haute protéine");
+  if(m.cal<320)tags.push("⚡ Léger");
+  if(r.steps&&r.steps.length<=3)tags.push("🕐 Rapide");
+  if(Object.keys(r.ingredients).some(k=>["lentilles","pois_chiches","haricots","quinoa"].includes(k)))tags.push("🌱 Végétarien");
+  return tags;
+};
+const ALL_TAGS=["💪 Haute protéine","⚡ Léger","🕐 Rapide","🌱 Végétarien"];
 
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
 export default function FitWomenApp(){
+  // ── États de base ──
   const [activeGoal,setActiveGoal]=useState("seche");
   const [activeMeal,setActiveMeal]=useState("Tous");
   const [search,setSearch]=useState("");
@@ -519,108 +538,94 @@ export default function FitWomenApp(){
   const [page,setPage]=useState(1);
   const [activeTab,setActiveTab]=useState("recette");
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
-  // ── Nouvelles features ──
+
+  // ── Onboarding / Profil ──
+  const [profile,setProfile]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_profile")||"null")||{done:false,name:"",goal:"seche",calTarget:1600};}catch{return{done:false,name:"",goal:"seche",calTarget:1600};}});
+  const [showOnboarding,setShowOnboarding]=useState(()=>{try{const p=JSON.parse(localStorage.getItem("fw_profile")||"null");return!p?.done;}catch{return true;}});
+  const [showProfile,setShowProfile]=useState(false);
+  const [pName,setPName]=useState(profile.name||"");
+  const [pGoal,setPGoal]=useState(profile.goal||"seche");
+  const [pCal,setPCal]=useState(profile.calTarget||1600);
+  const [obStep,setObStep]=useState(0);
+  const [obName,setObName]=useState("");
+  const [obGoal,setObGoal]=useState("seche");
+  const [obCal,setObCal]=useState(1600);
+
+  // ── Favoris ──
   const [favorites,setFavorites]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_favs")||"[]");}catch{return[];}});
   const [showFavsOnly,setShowFavsOnly]=useState(false);
+
+  // ── Tri & Tags ──
+  const [sortBy,setSortBy]=useState("default");
+  const [activeTagFilter,setActiveTagFilter]=useState(null);
+  const [showSortPanel,setShowSortPanel]=useState(false);
+
+  // ── Liste de courses ──
   const [cart,setCart]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_cart")||"[]");}catch{return[];}});
   const [showCart,setShowCart]=useState(false);
   const [checkedItems,setCheckedItems]=useState({});
-  const [dailyGoal,setDailyGoal]=useState(()=>Number(localStorage.getItem("fw_goal")||1600));
+
+  // ── Budget journalier ──
+  const [dailyGoalKcal,setDailyGoalKcal]=useState(()=>profile.calTarget||1600);
   const [dailyRecipes,setDailyRecipes]=useState([]);
   const [showDailyPanel,setShowDailyPanel]=useState(false);
   const [editingGoal,setEditingGoal]=useState(false);
-  const [tmpGoal,setTmpGoal]=useState(dailyGoal);
+  const [tmpGoal,setTmpGoal]=useState(dailyGoalKcal);
+
+  // ── Semainier ──
+  const [week,setWeek]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_week")||"null")||emptyWeek();}catch{return emptyWeek();}});
+  const [showWeek,setShowWeek]=useState(false);
+  const [weekDay,setWeekDay]=useState(DAYS[new Date().getDay()===0?6:new Date().getDay()-1]);
+  const [addToWeekTarget,setAddToWeekTarget]=useState(null); // {day,slot}
+  const [showWeekPicker,setShowWeekPicker]=useState(false);
+
+  // ── Animations swipe ──
+  const [swipeAnim,setSwipeAnim]=useState(null); // 'left'|'right'|null
+
   const PER_PAGE=20;
   const listRef=useRef(null);
 
+  // ── Resize ──
   useEffect(()=>{
     const r=()=>setIsMobile(window.innerWidth<768);
     window.addEventListener("resize",r);
     return()=>window.removeEventListener("resize",r);
   },[]);
 
-  // Persist favorites & cart
+  // ── Persistance ──
   useEffect(()=>{localStorage.setItem("fw_favs",JSON.stringify(favorites));},[favorites]);
   useEffect(()=>{localStorage.setItem("fw_cart",JSON.stringify(cart));},[cart]);
-  useEffect(()=>{localStorage.setItem("fw_goal",String(dailyGoal));},[dailyGoal]);
+  useEffect(()=>{localStorage.setItem("fw_goal",String(dailyGoalKcal));},[dailyGoalKcal]);
+  useEffect(()=>{localStorage.setItem("fw_week",JSON.stringify(week));},[week]);
+  useEffect(()=>{if(profile.done)localStorage.setItem("fw_profile",JSON.stringify(profile));},[profile]);
 
-  // Scroll to top on goal/meal change
+  // Sync objectif calorique avec le profil
+  useEffect(()=>{if(profile.calTarget)setDailyGoalKcal(profile.calTarget);},[profile.calTarget]);
+  // Sync états panneau profil quand on l'ouvre
+  useEffect(()=>{if(showProfile){setPName(profile.name||"");setPGoal(profile.goal||"seche");setPCal(profile.calTarget||1600);}},[showProfile]);
+
+  // Scroll to top on filter change
   useEffect(()=>{listRef.current?.scrollTo(0,0);window.scrollTo(0,0);},[activeGoal,activeMeal]);
 
-  const filtered=useMemo(()=>ALL_RECIPES.filter(r=>
-    r.goal===activeGoal&&
-    (activeMeal==="Tous"||r.meal===activeMeal)&&
-    (search===""||r.name.toLowerCase().includes(search.toLowerCase()))&&
-    (!showFavsOnly||favorites.includes(r.id))
-  ),[activeGoal,activeMeal,search,showFavsOnly,favorites]);
+  // ── Filtrage + Tri ──
+  const filtered=useMemo(()=>{
+    let list=ALL_RECIPES.filter(r=>
+      r.goal===activeGoal&&
+      (activeMeal==="Tous"||r.meal===activeMeal)&&
+      (search===""||r.name.toLowerCase().includes(search.toLowerCase()))&&
+      (!showFavsOnly||favorites.includes(r.id))&&
+      (!activeTagFilter||getTags(r).includes(activeTagFilter))
+    );
+    if(sortBy==="cal_asc")list=[...list].sort((a,b)=>computeMacros(a.ingredients).cal-computeMacros(b.ingredients).cal);
+    else if(sortBy==="cal_desc")list=[...list].sort((a,b)=>computeMacros(b.ingredients).cal-computeMacros(a.ingredients).cal);
+    else if(sortBy==="prot_desc")list=[...list].sort((a,b)=>computeMacros(b.ingredients).p-computeMacros(a.ingredients).p);
+    return list;
+  },[activeGoal,activeMeal,search,showFavsOnly,favorites,activeTagFilter,sortBy]);
 
   const paginated=useMemo(()=>filtered.slice(0,page*PER_PAGE),[filtered,page]);
   const mealCounts=useMemo(()=>{const c={};ALL_RECIPES.filter(r=>r.goal===activeGoal).forEach(r=>{c[r.meal]=(c[r.meal]||0)+1;});return c;},[activeGoal]);
 
-  const selectRecipe=useCallback((r)=>{
-    const m=computeMacros(r.ingredients);
-    setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});
-    setSelected(r);setCustomized(false);setShowDetail(true);setActiveTab("recette");
-  },[]);
-
-  const setSlider=useCallback((key,val)=>{setSliders(s=>({...s,[key]:val}));setCustomized(true);},[]);
-
-  // ── Favoris ──
-  const toggleFav=(id,e)=>{
-    e?.stopPropagation();
-    setFavorites(f=>f.includes(id)?f.filter(x=>x!==id):[...f,id]);
-  };
-
-  // ── Liste de courses ──
-  const addToCart=(recipe,e)=>{
-    e?.stopPropagation();
-    setCart(c=>{
-      const exists=c.find(x=>x.id===recipe.id);
-      if(exists)return c.map(x=>x.id===recipe.id?{...x,qty:x.qty+1}:x);
-      return[...c,{id:recipe.id,name:recipe.name,emoji:recipe.emoji,ingredients:recipe.ingredients,qty:1}];
-    });
-  };
-  const removeFromCart=(id)=>setCart(c=>c.filter(x=>x.id!==id));
-  const clearCart=()=>{setCart([]);setCheckedItems({});};
-
-  // Agrège tous les ingrédients du panier
-  const shoppingList=useMemo(()=>{
-    const agg={};
-    cart.forEach(item=>{
-      Object.entries(item.ingredients).forEach(([k,g])=>{
-        agg[k]=(agg[k]||0)+g*item.qty;
-      });
-    });
-    return Object.entries(agg).map(([k,g])=>({key:k,food:FOODS[k],grams:Math.round(g)})).filter(x=>x.food).sort((a,b)=>a.food.name.localeCompare(b.food.name));
-  },[cart]);
-
-  // ── Budget calorique ──
-  const addToDay=(recipe,e)=>{
-    e?.stopPropagation();
-    // Sauvegarde les ingrédients AJUSTÉS (sliders) + snapshot macros précis (sans double arrondi)
-    const ing=adjIngredients||recipe.ingredients;
-    const snap=computeMacros(ing); // 1 seul calcul → pas d'accumulation d'erreurs
-    setDailyRecipes(d=>[...d,{
-      id:recipe.id, name:recipe.name, emoji:recipe.emoji, meal:recipe.meal,
-      ingredients:ing,
-      macros:snap,   // snapshot figé au moment de l'ajout
-      addedAt:Date.now()
-    }]);
-  };
-  const removeFromDay=(idx)=>setDailyRecipes(d=>d.filter((_,i)=>i!==idx));
-  // Totaux journaliers — calculés depuis les snapshots figés (pas de double arrondi)
-  const dailyTotals=useMemo(()=>dailyRecipes.reduce(
-    (acc,r)=>{
-      const m=r.macros||computeMacros(r.ingredients); // fallback si ancien format
-      return{cal:acc.cal+m.cal, p:acc.p+m.p, c:acc.c+m.c, f:acc.f+m.f};
-    },
-    {cal:0,p:0,c:0,f:0}
-  ),[dailyRecipes]);
-  const dailyCal=Math.round(dailyTotals.cal);
-  const dailyPct=Math.min(100,Math.round((dailyCal/dailyGoal)*100));
-  const remaining=Math.max(0,dailyGoal-dailyCal);
-
-  // ── Touch bottom sheet : swipe sur tout le header dark ──
+  // ── Touch bottom sheet ──
   const touchRef=useRef({});
   const filteredRef=useRef(filtered);
   useEffect(()=>{filteredRef.current=filtered;},[filtered]);
@@ -635,12 +640,15 @@ export default function FitWomenApp(){
     if(dt>700)return;
     if(dy>55&&Math.abs(dx)<100){setShowDetail(false);setSelected(null);return;}
     if(Math.abs(dx)>65&&Math.abs(dy)<65){
+      const dir=dx<0?"left":"right";
       const list=filteredRef.current;
       setSelected(prev=>{
         if(!prev)return prev;
         const idx=list.findIndex(r=>r.id===prev.id);
         const target=dx<0?(idx<list.length-1?list[idx+1]:null):(idx>0?list[idx-1]:null);
         if(!target)return prev;
+        setSwipeAnim(dir);
+        setTimeout(()=>setSwipeAnim(null),350);
         const m=computeMacros(target.ingredients);
         setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});
         setCustomized(false);setActiveTab("recette");
@@ -649,6 +657,31 @@ export default function FitWomenApp(){
     }
   },[]);
 
+  // ── Sélection recette ──
+  const selectRecipe=useCallback((r)=>{
+    const m=computeMacros(r.ingredients);
+    setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});
+    setSelected(r);setCustomized(false);setShowDetail(true);setActiveTab("recette");
+  },[]);
+  const setSlider=useCallback((key,val)=>{setSliders(s=>({...s,[key]:val}));setCustomized(true);},[]);
+
+  // ── Favoris ──
+  const toggleFav=(id,e)=>{e?.stopPropagation();setFavorites(f=>f.includes(id)?f.filter(x=>x!==id):[...f,id]);};
+
+  // ── Courses ──
+  const addToCart=(recipe,e)=>{
+    e?.stopPropagation();
+    setCart(c=>{const ex=c.find(x=>x.id===recipe.id);if(ex)return c.map(x=>x.id===recipe.id?{...x,qty:x.qty+1}:x);return[...c,{id:recipe.id,name:recipe.name,emoji:recipe.emoji,ingredients:recipe.ingredients,qty:1}];});
+  };
+  const removeFromCart=(id)=>setCart(c=>c.filter(x=>x.id!==id));
+  const clearCart=()=>{setCart([]);setCheckedItems({});};
+  const shoppingList=useMemo(()=>{
+    const agg={};
+    cart.forEach(item=>{Object.entries(item.ingredients).forEach(([k,g])=>{agg[k]=(agg[k]||0)+g*item.qty;});});
+    return Object.entries(agg).map(([k,g])=>({key:k,food:FOODS[k],grams:Math.round(g)})).filter(x=>x.food).sort((a,b)=>a.food.name.localeCompare(b.food.name));
+  },[cart]);
+
+  // ── Budget journalier ──
   const adjIngredients=useMemo(()=>selected?adjustRecipe(selected.ingredients,sliders):null,[selected,sliders]);
   const adjMacros=useMemo(()=>adjIngredients?computeMacros(adjIngredients):null,[adjIngredients]);
   const adjMicros=useMemo(()=>adjIngredients?computeMicros(adjIngredients):null,[adjIngredients]);
@@ -663,36 +696,81 @@ export default function FitWomenApp(){
     };
   },[baseMacros,adjInfo]);
 
-  const gc=GOALS[activeGoal];
-  const goalTotal=ALL_RECIPES.filter(r=>r.goal===activeGoal).length;
+  const addToDay=(recipe,e)=>{
+    e?.stopPropagation();
+    const ing=adjIngredients||recipe.ingredients;
+    const snap=computeMacros(ing);
+    setDailyRecipes(d=>[...d,{id:recipe.id,name:recipe.name,emoji:recipe.emoji,meal:recipe.meal,ingredients:ing,macros:snap,addedAt:Date.now()}]);
+  };
+  const removeFromDay=(idx)=>setDailyRecipes(d=>d.filter((_,i)=>i!==idx));
+  const dailyTotals=useMemo(()=>dailyRecipes.reduce((acc,r)=>{const m=r.macros||computeMacros(r.ingredients);return{cal:acc.cal+m.cal,p:acc.p+m.p,c:acc.c+m.c,f:acc.f+m.f};},{cal:0,p:0,c:0,f:0}),[dailyRecipes]);
+  const dailyCal=Math.round(dailyTotals.cal);
+  const dailyPct=Math.min(100,Math.round((dailyCal/dailyGoalKcal)*100));
+  const remaining=Math.max(0,dailyGoalKcal-dailyCal);
 
-  // ── Contenu onglets (partagé mobile/desktop) ──
+  // ── Semainier ──
+  const addToWeek=(day,slot,recipe)=>{
+    const ing=adjIngredients||recipe.ingredients;
+    const snap=computeMacros(ing);
+    setWeek(w=>({...w,[day]:{...w[day],[slot]:[...w[day][slot],{id:recipe.id,name:recipe.name,emoji:recipe.emoji,macros:snap}]}}));
+  };
+  const removeFromWeek=(day,slot,idx)=>{
+    setWeek(w=>({...w,[day]:{...w[day],[slot]:w[day][slot].filter((_,i)=>i!==idx)}}));
+  };
+  const weekDayTotal=(day)=>SLOTS.reduce((s,slot)=>s+week[day][slot].reduce((ss,r)=>ss+(r.macros?.cal||0),0),0);
+  const clearWeek=()=>setWeek(emptyWeek());
+
+  // ── Onboarding ──
+  const finishOnboarding=()=>{
+    const p={done:true,name:obName||"",goal:obGoal,calTarget:obCal};
+    setProfile(p);
+    setActiveGoal(obGoal);
+    setDailyGoalKcal(obCal);
+    setShowOnboarding(false);
+  };
+  const saveProfile=(p)=>{
+    setProfile({...p,done:true});
+    setActiveGoal(p.goal);
+    setDailyGoalKcal(p.calTarget);
+    setShowProfile(false);
+  };
+
+  const gc=GOALS[activeGoal];
+
+  // ── RENDER DETAIL ──────────────────────────────────────────────────────────
   function renderDetailContent(){
     if(!selected)return null;
-    return(<>
+    return(<div style={{animation:swipeAnim?`${swipeAnim==="left"?"slideFromRight":"slideFromLeft"} 0.28s ease`:"none"}}>
       {activeTab==="recette"&&<>
         {adjMacros&&(
-          <div style={{background:"#faf7f4",borderRadius:16,padding:"14px 18px",marginBottom:16,display:"flex",justifyContent:"space-around",textAlign:"center"}}>
-            {[["Calories",adjMacros.cal,"kcal",ROSE],["Protéines",adjMacros.p,"g","#d4826a"],["Glucides",adjMacros.c,"g","#7a9e87"],["Lipides",adjMacros.f,"g","#b08a6e"]].map(([l,v,u,c])=>(
+          <div style={{background:"#faf7f4",borderRadius:16,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-around",textAlign:"center"}}>
+            {[["Cal",adjMacros.cal,"kcal",ROSE],["Prot",adjMacros.p,"g","#d4826a"],["Gluc",adjMacros.c,"g","#7a9e87"],["Lip",adjMacros.f,"g","#b08a6e"]].map(([l,v,u,c])=>(
               <div key={l}><div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:c}}>{v}</div><div style={{fontSize:9,color:"#ccc",textTransform:"uppercase",letterSpacing:"0.07em"}}>{l}</div></div>
             ))}
           </div>
         )}
-        {/* Actions rapides */}
-        <div style={{display:"flex",gap:8,marginBottom:18}}>
+        {/* Tags */}
+        {(()=>{const tags=getTags(selected);return tags.length>0&&<div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>{tags.map(t=><span key={t} style={{fontSize:10,background:"#f0ebe4",color:"#8a7060",borderRadius:99,padding:"3px 10px",fontWeight:600}}>{t}</span>)}</div>})()}
+        {/* Boutons actions */}
+        <div style={{display:"flex",gap:8,marginBottom:16}}>
           <button onClick={(e)=>addToDay(selected,e)}
-            style={{flex:1,padding:"10px 8px",background:dailyRecipes.find(r=>r.addedAt&&r.id===selected.id)?"#e8f4ea":"#faf7f4",border:"1px solid #e8e2db",borderRadius:12,fontSize:11,fontWeight:700,color:"#5a8a5a",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+            style={{flex:1,padding:"9px 6px",background:dailyRecipes.find(r=>r.addedAt&&r.id===selected.id)?"#e8f4ea":"#faf7f4",border:"1px solid #e8e2db",borderRadius:12,fontSize:10,fontWeight:700,color:"#5a8a5a",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
             📅 Ajouter au jour
           </button>
+          <button onClick={(e)=>{e.stopPropagation();setShowWeekPicker(true);}}
+            style={{flex:1,padding:"9px 6px",background:"#f5f0f8",border:"1px solid #e0d8e8",borderRadius:12,fontSize:10,fontWeight:700,color:"#8060a0",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            📆 Semainier
+          </button>
           <button onClick={(e)=>addToCart(selected,e)}
-            style={{flex:1,padding:"10px 8px",background:cart.find(x=>x.id===selected.id)?"#fdf3e8":"#faf7f4",border:"1px solid #e8e2db",borderRadius:12,fontSize:11,fontWeight:700,color:ROSE,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-            🛒 {cart.find(x=>x.id===selected.id)?"Dans le panier":"Courses"}
+            style={{flex:1,padding:"9px 6px",background:cart.find(x=>x.id===selected.id)?"#fdf3e8":"#faf7f4",border:"1px solid #e8e2db",borderRadius:12,fontSize:10,fontWeight:700,color:ROSE,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+            🛒 Courses
           </button>
         </div>
-        <div style={{marginBottom:22}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700}}>Ajuste les quantités</div>
-            {customized&&<button onClick={()=>{const m=computeMacros(selected.ingredients);setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});setCustomized(false);}} style={{fontSize:11,color:ROSE,background:"none",border:"none",cursor:"pointer",fontWeight:700}}>↺ Reset</button>}
+        {/* Sliders */}
+        <div style={{marginBottom:20}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700}}>Ajuste les quantités</div>
+            {customized&&<button onClick={()=>{const m=computeMacros(selected.ingredients);setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});setCustomized(false);}} style={{fontSize:10,color:ROSE,background:"none",border:"none",cursor:"pointer",fontWeight:700}}>↺ Reset</button>}
           </div>
           {adjInfo&&<>
             <Slider label="Protéines" unit="g" value={sliders.p} min={sliderRanges.p.min} max={Math.max(sliderRanges.p.min+1,sliderRanges.p.max)} onChange={v=>setSlider("p",v)} color="#d4826a" disabled={!adjInfo.hasProtein}/>
@@ -700,100 +778,87 @@ export default function FitWomenApp(){
             <Slider label="Lipides"   unit="g" value={sliders.f} min={sliderRanges.f.min} max={Math.max(sliderRanges.f.min+1,sliderRanges.f.max)} onChange={v=>setSlider("f",v)} color="#b08a6e" disabled={!adjInfo.hasFat}/>
           </>}
         </div>
-        {adjIngredients&&(
-          <div>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:12}}>
-              Ingrédients {customized&&<span style={{fontSize:10,color:ROSE,fontFamily:"'Jost',sans-serif",fontWeight:500}}>· ajustés</span>}
-            </div>
-            {Object.entries(adjIngredients).map(([key,grams])=>{
-              const food=FOODS[key];if(!food)return null;const s=grams/100;
-              return(
-                <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f5f0ea"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{fontSize:18}}>{food.emoji}</span>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:600,color:DARK}}>{food.name}</div>
-                      <div style={{fontSize:10,color:"#ccc",marginTop:1}}>{Math.round(food.cal*s)} kcal · P:{Math.round(food.p*s)}g · G:{Math.round(food.c*s)}g · L:{Math.round(food.f*s)}g</div>
-                    </div>
-                  </div>
-                  <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:14,borderRadius:10,padding:"4px 12px",fontFamily:"'Cormorant Garamond',serif",flexShrink:0,marginLeft:8}}>{grams}g</div>
-                </div>
-              );
-            })}
+        {/* Ingrédients */}
+        {adjIngredients&&<div>
+          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,marginBottom:10}}>
+            Ingrédients {customized&&<span style={{fontSize:10,color:ROSE,fontFamily:"'Jost',sans-serif",fontWeight:500}}>· ajustés</span>}
           </div>
-        )}
-      </>}
-
-      {activeTab==="etapes"&&(
-        <div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Étapes de préparation</div>
-          <p style={{fontSize:11,color:"#bbb",marginBottom:20,lineHeight:1.5}}>{selected.desc}</p>
-          {(selected.steps||[]).map((step,i)=>(
-            <div key={i} style={{display:"flex",gap:12,marginBottom:14}}>
-              <div style={{width:26,height:26,borderRadius:"50%",background:DARK,color:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontWeight:700,flexShrink:0,marginTop:2}}>{i+1}</div>
-              <div style={{background:"#faf7f4",borderRadius:12,padding:"11px 14px",flex:1,fontSize:13,color:"#444",lineHeight:1.6}}>{step}</div>
-            </div>
-          ))}
-          <div style={{marginTop:18,background:"#fdf8f3",borderRadius:14,padding:"14px 16px",border:`1px solid ${ROSE}22`}}>
-            <div style={{fontSize:11,fontWeight:700,color:ROSE,marginBottom:5}}>💡 Conseil nutrition</div>
-            <div style={{fontSize:11,color:"#aaa",lineHeight:1.6}}>
-              {selected.goal==="seche"?"Peser les ingrédients pour rester dans ton déficit calorique. Chaque gramme compte !":selected.goal==="muscle"?"Ne pas rogner sur les portions — le surplus calorique est indispensable.":"Écoute tes sensations de faim et de satiété."}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab==="micros"&&adjMicros&&(
-        <div>
-          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Micronutriments clés</div>
-          <p style={{fontSize:11,color:"#bbb",marginBottom:18,lineHeight:1.5}}>Apports pour cette recette · % besoins journaliers recommandés.</p>
-          {Object.entries(MICRO_INFO).map(([key,info])=>{
-            const val=adjMicros[key];const pct=Math.min(100,Math.round((val/info.rdi)*100));
-            const isGood=pct>=20;const isGreat=pct>=50;
+          {Object.entries(adjIngredients).map(([key,grams])=>{
+            const food=FOODS[key];if(!food)return null;const s=grams/100;
             return(
-              <div key={key} style={{marginBottom:14,padding:"12px 14px",background:"#faf7f4",borderRadius:12}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <span style={{fontSize:16}}>{info.icon}</span>
-                    <div><div style={{fontSize:12,fontWeight:700,color:DARK}}>{info.label}</div><div style={{fontSize:10,color:"#bbb"}}>AJR : {info.rdi}{info.unit}</div></div>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:isGreat?"#6b9e72":isGood?info.color:"#ccc"}}>{val}{info.unit}</div>
-                    <div style={{fontSize:9,color:isGreat?"#6b9e72":isGood?info.color:"#ccc",fontWeight:700}}>{pct}% AJR</div>
+              <div key={key} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid #f5f0ea"}}>
+                <div style={{display:"flex",alignItems:"center",gap:9}}>
+                  <span style={{fontSize:17}}>{food.emoji}</span>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600,color:DARK}}>{food.name}</div>
+                    <div style={{fontSize:10,color:"#ccc",marginTop:1}}>{Math.round(food.cal*s)} kcal · P:{Math.round(food.p*s)}g G:{Math.round(food.c*s)}g L:{Math.round(food.f*s)}g</div>
                   </div>
                 </div>
-                <div style={{height:5,background:"#ede7e0",borderRadius:999}}>
-                  <div style={{height:"100%",width:`${pct}%`,background:isGreat?"linear-gradient(90deg,#a8d4ae,#6b9e72)":isGood?`linear-gradient(90deg,${ROSE_L},${info.color})`:"#e8e2db",borderRadius:999,transition:"width 0.5s ease"}}/>
-                </div>
+                <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:13,borderRadius:10,padding:"3px 11px",fontFamily:"'Cormorant Garamond',serif",flexShrink:0,marginLeft:8}}>{grams}g</div>
               </div>
             );
           })}
-          <div style={{marginTop:14,padding:"11px 14px",background:"#fdf8f3",borderRadius:12,border:`1px solid ${ROSE}22`}}>
-            <div style={{fontSize:10,color:"#bbb",lineHeight:1.6}}><strong style={{color:"#aaa"}}>Sources :</strong> Table Ciqual 2025 (Anses). AJR femme adulte active.</div>
+        </div>}
+      </>}
+
+      {activeTab==="etapes"&&<div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Préparation</div>
+        <p style={{fontSize:11,color:"#bbb",marginBottom:18,lineHeight:1.55}}>{selected.desc}</p>
+        {(selected.steps||[]).map((step,i)=>(
+          <div key={i} style={{display:"flex",gap:11,marginBottom:13}}>
+            <div style={{width:25,height:25,borderRadius:"50%",background:DARK,color:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontWeight:700,flexShrink:0,marginTop:2}}>{i+1}</div>
+            <div style={{background:"#faf7f4",borderRadius:12,padding:"10px 13px",flex:1,fontSize:12,color:"#444",lineHeight:1.6}}>{step}</div>
           </div>
+        ))}
+        <div style={{marginTop:16,background:"#fdf8f3",borderRadius:13,padding:"13px 15px",border:`1px solid ${ROSE}22`}}>
+          <div style={{fontSize:10,fontWeight:700,color:ROSE,marginBottom:4}}>💡 Conseil</div>
+          <div style={{fontSize:11,color:"#aaa",lineHeight:1.6}}>{selected.goal==="seche"?"Peser les ingrédients pour rester dans ton déficit. Chaque gramme compte !":selected.goal==="muscle"?"Ne pas rogner sur les portions — le surplus est indispensable.":"Écoute tes sensations de faim et satiété."}</div>
         </div>
-      )}
-    </>);
+      </div>}
+
+      {activeTab==="micros"&&adjMicros&&<div>
+        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Micronutriments</div>
+        <p style={{fontSize:11,color:"#bbb",marginBottom:16,lineHeight:1.5}}>Apports pour cette recette · % AJR femme active.</p>
+        {Object.entries(MICRO_INFO).map(([key,info])=>{
+          const val=adjMicros[key];const pct=Math.min(100,Math.round((val/info.rdi)*100));
+          const isGreat=pct>=50;const isGood=pct>=20;
+          return(
+            <div key={key} style={{marginBottom:12,padding:"11px 13px",background:"#faf7f4",borderRadius:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:15}}>{info.icon}</span>
+                  <div><div style={{fontSize:12,fontWeight:700,color:DARK}}>{info.label}</div><div style={{fontSize:9,color:"#bbb"}}>AJR : {info.rdi}{info.unit}</div></div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,color:isGreat?"#6b9e72":isGood?info.color:"#ccc"}}>{val}{info.unit}</div>
+                  <div style={{fontSize:9,color:isGreat?"#6b9e72":isGood?info.color:"#ccc",fontWeight:700}}>{pct}%</div>
+                </div>
+              </div>
+              <div style={{height:4,background:"#ede7e0",borderRadius:999}}><div style={{height:"100%",width:`${pct}%`,background:isGreat?"#6b9e72":isGood?info.color:"#e8e2db",borderRadius:999}}/></div>
+            </div>
+          );
+        })}
+      </div>}
+    </div>);
   }
 
-  // ── Panneau detail partagé (header + tabs) ──
   function SheetHeader(){
     return(
       <div onTouchStart={onSheetTouchStart} onTouchEnd={onSheetTouchEnd}
-        style={{background:DARK,padding:isMobile?"14px 18px":"22px 24px",flexShrink:0}}>
+        style={{background:DARK,padding:isMobile?"13px 18px":"20px 24px",flexShrink:0}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
           <div style={{display:"flex",gap:10,alignItems:"flex-start",flex:1}}>
-            <span style={{fontSize:isMobile?26:30,flexShrink:0}}>{selected?.emoji}</span>
+            <span style={{fontSize:isMobile?24:28,flexShrink:0}}>{selected?.emoji}</span>
             <div>
-              <div style={{fontSize:9,color:ROSE,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:3}}>{GOALS[selected?.goal]?.label} · {selected?.meal}</div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:isMobile?16:19,fontWeight:700,color:"#fff",lineHeight:1.2}}>{selected?.name}</div>
+              <div style={{fontSize:9,color:ROSE,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:2}}>{GOALS[selected?.goal]?.label} · {selected?.meal}</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:isMobile?15:18,fontWeight:700,color:"#fff",lineHeight:1.2}}>{selected?.name}</div>
             </div>
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0,marginLeft:8}}>
-            <button onClick={(e)=>toggleFav(selected?.id,e)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0,marginLeft:8}}>
+            <button onClick={(e)=>toggleFav(selected?.id,e)} style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>
               {favorites.includes(selected?.id)?"❤️":"🤍"}
             </button>
-            <button onClick={()=>{setShowDetail(false);setSelected(null);}} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            <button onClick={()=>{setShowDetail(false);setSelected(null);}} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
           </div>
         </div>
         <div style={{display:"flex",gap:5}}>
@@ -804,144 +869,195 @@ export default function FitWomenApp(){
             </button>
           ))}
         </div>
-        {isMobile&&<div style={{textAlign:"center",marginTop:8,fontSize:8,color:"#444",letterSpacing:"0.12em"}}>↓ GLISSER POUR FERMER &nbsp;·&nbsp; ← → NAVIGUER</div>}
+        {isMobile&&<div style={{textAlign:"center",marginTop:7,fontSize:8,color:"#333",letterSpacing:"0.12em"}}>↓ GLISSER POUR FERMER &nbsp;·&nbsp; ← → NAVIGUER</div>}
       </div>
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
   return(
     <div style={{minHeight:"100vh",background:"#f9f6f2",fontFamily:"'Jost',sans-serif",color:DARK}}>
-      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-      <style>{`*{box-sizing:border-box}input[type=range]{-webkit-appearance:none}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#e0d4c8;border-radius:99px}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}`}</style>
+      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+      <style>{`
+        *{box-sizing:border-box}
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#e0d4c8;border-radius:99px}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+        @keyframes slideFromRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes slideFromLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes fadeInScale{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+      `}</style>
 
       {/* ── HEADER ── */}
-      <div style={{background:DARK,padding:"12px 20px",position:"sticky",top:0,zIndex:200}}>
-        <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:34,height:34,borderRadius:"50%",background:`linear-gradient(135deg,${ROSE},#e8c4a0)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <span style={{color:DARK,fontWeight:800,fontSize:11,fontFamily:"'Cormorant Garamond',serif"}}>FW</span>
+      <div style={{background:DARK,padding:"11px 18px",position:"sticky",top:0,zIndex:200,boxShadow:"0 2px 20px rgba(0,0,0,0.3)"}}>
+        <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+            <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${ROSE},#e8c4a0)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <span style={{color:DARK,fontWeight:800,fontSize:10,fontFamily:"'Cormorant Garamond',serif"}}>FW</span>
             </div>
-            <div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:"#fff",letterSpacing:"0.12em",textTransform:"uppercase"}}>Fitwomen</div>
-              <div style={{fontSize:8,color:ROSE,letterSpacing:"0.18em",textTransform:"uppercase"}}>Bibliothèque Nutritionnelle · Ciqual 2025</div>
+            <div style={{minWidth:0}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,color:"#fff",letterSpacing:"0.1em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Fitwomen</div>
+              {profile.name&&<div style={{fontSize:8,color:"#555",letterSpacing:"0.1em",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Bonjour {profile.name} 👋</div>}
             </div>
           </div>
-          {/* Icons header */}
-          <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            {/* Budget journalier */}
+          <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+            {/* Semainier */}
+            <button onClick={()=>setShowWeek(true)}
+              style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              📆
+            </button>
+            {/* Budget */}
             <button onClick={()=>setShowDailyPanel(true)}
-              style={{display:"flex",flexDirection:"column",alignItems:"center",background:"rgba(255,255,255,0.06)",border:`1px solid ${dailyPct>90?"#e8a0a0":dailyPct>0?"#a0c8a0":"rgba(255,255,255,0.1)"}`,borderRadius:10,padding:"5px 10px",cursor:"pointer",minWidth:64}}>
-              <div style={{fontSize:10,fontWeight:700,color:dailyPct>90?"#e88080":dailyPct>0?"#90c090":"#666"}}>{dailyCal} kcal</div>
-              <div style={{width:48,height:3,background:"#333",borderRadius:99,marginTop:3,overflow:"hidden"}}>
-                <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#e88080":"#90c090",borderRadius:99,transition:"width 0.4s"}}/>
+              style={{display:"flex",flexDirection:"column",alignItems:"center",background:"rgba(255,255,255,0.06)",border:`1px solid ${dailyPct>90?"#e8a0a0":dailyPct>0?"#a0c8a0":"rgba(255,255,255,0.1)"}`,borderRadius:10,padding:"4px 9px",cursor:"pointer",minWidth:58}}>
+              <div style={{fontSize:10,fontWeight:700,color:dailyPct>90?"#e88080":dailyPct>0?"#90c090":"#666",lineHeight:1}}>{dailyCal}</div>
+              <div style={{width:42,height:3,background:"#333",borderRadius:99,margin:"3px 0",overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#e88080":"#90c090",borderRadius:99}}/>
               </div>
-              <div style={{fontSize:8,color:"#555",marginTop:2}}>{remaining > 0 ? `−${remaining}` : "✓"} kcal</div>
+              <div style={{fontSize:8,color:"#444",lineHeight:1}}>{remaining>0?`-${remaining}`:"✓"} kcal</div>
             </button>
             {/* Panier */}
             <button onClick={()=>setShowCart(true)}
-              style={{position:"relative",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,width:38,height:38,cursor:"pointer",fontSize:17,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              style={{position:"relative",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
               🛒
-              {cart.length>0&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:ROSE,color:"#fff",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{cart.length}</div>}
+              {cart.length>0&&<div style={{position:"absolute",top:-4,right:-4,width:15,height:15,borderRadius:"50%",background:ROSE,color:"#fff",fontSize:8,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{cart.length}</div>}
+            </button>
+            {/* Profil */}
+            <button onClick={()=>setShowProfile(true)}
+              style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${ROSE}44`,borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              👤
             </button>
           </div>
         </div>
       </div>
 
-      <div style={{maxWidth:1300,margin:"0 auto",padding:"0 16px"}}>
+      <div style={{maxWidth:1300,margin:"0 auto",padding:"0 14px"}}>
         {/* ── GOAL TABS ── */}
-        <div style={{display:"flex",gap:10,padding:"16px 0 12px"}}>
+        <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
-            <button key={key} onClick={()=>{setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);}}
-              style={{flex:1,padding:"12px 8px",border:"1.5px solid",borderColor:activeGoal===key?ROSE:"#e8e2db",borderRadius:16,background:activeGoal===key?DARK:"#fff",color:activeGoal===key?"#fff":"#aaa",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.2s",textAlign:"center"}}>
-              <div style={{fontSize:22,marginBottom:3}}>{cfg.emoji}</div>
-              <div style={{textTransform:"uppercase",fontWeight:700,marginBottom:1,fontSize:10}}>{cfg.label}</div>
-              <div style={{fontSize:8,color:activeGoal===key?"#888":"#ccc",fontWeight:400}}>{cfg.desc}</div>
+            <button key={key} onClick={()=>{setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");}}
+              style={{flex:1,padding:"10px 6px",border:"1.5px solid",borderColor:activeGoal===key?ROSE:"#e8e2db",borderRadius:14,background:activeGoal===key?DARK:"#fff",color:activeGoal===key?"#fff":"#aaa",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.2s",textAlign:"center"}}>
+              <div style={{fontSize:20,marginBottom:2}}>{cfg.emoji}</div>
+              <div style={{textTransform:"uppercase",fontWeight:700,fontSize:9}}>{cfg.label}</div>
             </button>
           ))}
         </div>
 
-        {/* ── FILTERS ── */}
-        <div style={{marginBottom:16}}>
-          {/* Search full width mobile */}
-          <div style={{marginBottom:10}}>
+        {/* ── FILTRES ── */}
+        <div style={{marginBottom:14}}>
+          {/* Barre de recherche */}
+          <div style={{marginBottom:8}}>
             <input placeholder="🔍 Rechercher une recette..." value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}
               style={{width:"100%",padding:"9px 16px",border:"1px solid #e8e2db",borderRadius:99,fontSize:12,outline:"none",color:DARK,background:"#fff",fontFamily:"'Jost',sans-serif"}}/>
           </div>
-          {/* Meal filters + favoris */}
-          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {/* Filtres repas */}
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:6}}>
             {MEALS.map(m=>{
               const count=m==="Tous"?ALL_RECIPES.filter(r=>r.goal===activeGoal).length:(mealCounts[m]||0);
               return(
                 <button key={m} onClick={()=>{setActiveMeal(m);setPage(1);setShowFavsOnly(false);}}
-                  style={{padding:"6px 12px",border:"1px solid",borderColor:activeMeal===m&&!showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:activeMeal===m&&!showFavsOnly?ROSE_L:"#fff",color:activeMeal===m&&!showFavsOnly?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s"}}>
-                  {m} <span style={{opacity:0.6}}>({count})</span>
+                  style={{padding:"5px 11px",border:"1px solid",borderColor:activeMeal===m&&!showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:activeMeal===m&&!showFavsOnly?ROSE_L:"#fff",color:activeMeal===m&&!showFavsOnly?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+                  {m} <span style={{opacity:0.55}}>({count})</span>
                 </button>
               );
             })}
             <button onClick={()=>{setShowFavsOnly(f=>!f);setPage(1);}}
-              style={{padding:"6px 12px",border:"1px solid",borderColor:showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:showFavsOnly?ROSE_L:"#fff",color:showFavsOnly?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s"}}>
-              ❤️ Favoris {favorites.length>0&&<span style={{opacity:0.6}}>({favorites.length})</span>}
+              style={{padding:"5px 11px",border:"1px solid",borderColor:showFavsOnly?ROSE:"#e8e2db",borderRadius:99,background:showFavsOnly?ROSE_L:"#fff",color:showFavsOnly?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+              ❤️ Favoris{favorites.length>0?` (${favorites.length})`:""}
             </button>
           </div>
+          {/* Tags + Tri */}
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+            {ALL_TAGS.map(tag=>(
+              <button key={tag} onClick={()=>{setActiveTagFilter(t=>t===tag?null:tag);setPage(1);}}
+                style={{padding:"4px 10px",border:"1px solid",borderColor:activeTagFilter===tag?"#8060a0":"#e8e2db",borderRadius:99,background:activeTagFilter===tag?"#f5f0f8":"#fff",color:activeTagFilter===tag?"#8060a0":"#ccc",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+                {tag}
+              </button>
+            ))}
+            {/* Tri */}
+            <div style={{marginLeft:"auto",position:"relative"}}>
+              <button onClick={()=>setShowSortPanel(s=>!s)}
+                style={{padding:"4px 11px",border:`1px solid ${sortBy!=="default"?ROSE:"#e8e2db"}`,borderRadius:99,background:sortBy!=="default"?ROSE_L:"#fff",color:sortBy!=="default"?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
+                ↕ Trier
+              </button>
+              {showSortPanel&&(
+                <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",background:"#fff",border:"1px solid #e8e2db",borderRadius:14,boxShadow:"0 8px 30px rgba(0,0,0,0.1)",zIndex:100,minWidth:170,overflow:"hidden",animation:"fadeInScale 0.15s ease"}}>
+                  {[["default","Par défaut"],["cal_asc","Calories ↑"],["cal_desc","Calories ↓"],["prot_desc","Protéines ↓"]].map(([v,l])=>(
+                    <button key={v} onClick={()=>{setSortBy(v);setShowSortPanel(false);}}
+                      style={{display:"block",width:"100%",textAlign:"left",padding:"10px 16px",border:"none",background:sortBy===v?ROSE_L:"#fff",color:sortBy===v?"#8a6040":DARK,fontFamily:"'Jost',sans-serif",fontSize:12,fontWeight:sortBy===v?700:400,cursor:"pointer",borderBottom:"1px solid #f5f0ea"}}>
+                      {sortBy===v?"✓ ":""}{l}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Indicateur filtres actifs */}
+          {(sortBy!=="default"||activeTagFilter||showFavsOnly)&&(
+            <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+              <span style={{fontSize:9,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em"}}>Filtres actifs :</span>
+              {activeTagFilter&&<span style={{fontSize:10,background:"#f5f0f8",color:"#8060a0",borderRadius:99,padding:"2px 9px",fontWeight:600}}>{activeTagFilter} ✕</span>}
+              {showFavsOnly&&<span style={{fontSize:10,background:ROSE_L,color:"#8a6040",borderRadius:99,padding:"2px 9px",fontWeight:600}}>Favoris ✕</span>}
+              {sortBy!=="default"&&<span style={{fontSize:10,background:"#f0f4f8",color:"#607090",borderRadius:99,padding:"2px 9px",fontWeight:600}}>{sortBy==="cal_asc"?"Cal ↑":sortBy==="cal_desc"?"Cal ↓":"Prot ↓"} ✕</span>}
+              <button onClick={()=>{setSortBy("default");setActiveTagFilter(null);setShowFavsOnly(false);}} style={{fontSize:10,color:"#ccc",background:"none",border:"none",cursor:"pointer",fontWeight:600,marginLeft:2}}>Tout effacer</button>
+            </div>
+          )}
         </div>
 
-        {/* ── MAIN GRID ── */}
-        <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr 460px":"1fr",gap:24,alignItems:"start"}}>
-          {/* RECIPE CARDS */}
+        {/* ── GRILLE RECETTES + PANEL DESKTOP ── */}
+        <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr 450px":"1fr",gap:22,alignItems:"start"}}>
           <div ref={listRef}>
-            <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>
+            <div style={{display:"grid",gridTemplateColumns:(!isMobile&&showDetail)?"1fr":"repeat(auto-fill,minmax(290px,1fr))",gap:12}}>
               {paginated.map((r,i)=>{
                 const m=computeMacros(r.ingredients);const isSel=selected?.id===r.id;const gc2=GOALS[r.goal];const isFav=favorites.includes(r.id);
+                const tags=getTags(r);
                 return(
                   <div key={r.id} onClick={()=>selectRecipe(r)}
-                    style={{background:isSel?"#fff":"#faf7f4",border:`1.5px solid ${isSel?ROSE:"#ece6df"}`,borderRadius:20,padding:"18px 20px",cursor:"pointer",transition:"all 0.18s",boxShadow:isSel?"0 6px 30px rgba(201,168,130,0.22)":"0 1px 4px rgba(0,0,0,0.04)",animation:`fadeIn 0.3s ease ${(i%20)*0.02}s both`,position:"relative"}}>
-                    {/* Bouton favori */}
+                    style={{background:isSel?"#fff":"#faf7f4",border:`1.5px solid ${isSel?ROSE:"#ece6df"}`,borderRadius:18,padding:"16px 18px",cursor:"pointer",transition:"all 0.18s",boxShadow:isSel?"0 6px 28px rgba(201,168,130,0.22)":"0 1px 4px rgba(0,0,0,0.04)",animation:`fadeIn 0.3s ease ${(i%20)*0.02}s both`,position:"relative"}}>
                     <button onClick={(e)=>toggleFav(r.id,e)}
-                      style={{position:"absolute",top:12,right:12,background:"none",border:"none",cursor:"pointer",fontSize:16,padding:4,zIndex:2}}>
+                      style={{position:"absolute",top:11,right:11,background:"none",border:"none",cursor:"pointer",fontSize:15,padding:4,zIndex:2,lineHeight:1}}>
                       {isFav?"❤️":"🤍"}
                     </button>
-                    <div style={{paddingRight:28}}>
-                      <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
-                        <span style={{fontSize:18}}>{r.emoji}</span>
-                        <span style={{fontSize:9,fontWeight:700,color:gc2.color,background:gc2.color+"18",borderRadius:20,padding:"2px 9px",textTransform:"uppercase",letterSpacing:"0.05em"}}>{r.meal}</span>
+                    <div style={{paddingRight:26}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+                        <span style={{fontSize:17}}>{r.emoji}</span>
+                        <span style={{fontSize:9,fontWeight:700,color:gc2.color,background:gc2.color+"18",borderRadius:20,padding:"2px 8px",textTransform:"uppercase",letterSpacing:"0.05em"}}>{r.meal}</span>
+                        {tags.slice(0,1).map(t=><span key={t} style={{fontSize:8,color:"#aaa",background:"#f0ebe4",borderRadius:99,padding:"1px 7px",fontWeight:600}}>{t}</span>)}
                       </div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,color:DARK,lineHeight:1.25,marginBottom:6}}>{r.name}</div>
-                      {r.desc&&<p style={{fontSize:10,color:"#aaa",margin:0,lineHeight:1.5,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{r.desc}</p>}
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,fontWeight:700,color:DARK,lineHeight:1.25,marginBottom:5}}>{r.name}</div>
                     </div>
-                    <div style={{display:"flex",gap:12,paddingTop:10,marginTop:8,borderTop:"1px solid #f0ebe4",alignItems:"center"}}>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:ROSE}}>{m.cal}<span style={{fontSize:9,color:"#ccc",fontWeight:400,marginLeft:2}}>kcal</span></div>
+                    <div style={{display:"flex",gap:10,paddingTop:9,marginTop:6,borderTop:"1px solid #f0ebe4",alignItems:"center"}}>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:19,fontWeight:700,color:ROSE}}>{m.cal}<span style={{fontSize:9,color:"#ccc",fontWeight:400,marginLeft:1}}>kcal</span></div>
                       {[["P",m.p,"#d4826a"],["G",m.c,"#7a9e87"],["L",m.f,ROSE]].map(([l,v,c])=>(
-                        <span key={l} style={{fontSize:11,color:c,fontWeight:700}}>{l}:{v}g</span>
+                        <span key={l} style={{fontSize:10,color:c,fontWeight:700}}>{l}:{v}g</span>
                       ))}
-                      <span style={{marginLeft:"auto",fontSize:10,color:isSel?ROSE:"#ddd",fontWeight:700}}>{isSel?"✦ Ouv.":"Voir →"}</span>
+                      <span style={{marginLeft:"auto",fontSize:9,color:isSel?ROSE:"#ddd",fontWeight:700}}>{isSel?"✦":"→"}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
             {paginated.length<filtered.length&&(
-              <div style={{textAlign:"center",marginTop:24,paddingBottom:8}}>
-                <button onClick={()=>setPage(p=>p+1)} style={{background:DARK,color:"#fff",border:"none",borderRadius:12,padding:"12px 32px",fontWeight:700,cursor:"pointer",fontSize:12}}>
-                  ✦ Voir plus ({filtered.length-paginated.length} recettes)
+              <div style={{textAlign:"center",marginTop:22,paddingBottom:6}}>
+                <button onClick={()=>setPage(p=>p+1)} style={{background:DARK,color:"#fff",border:"none",borderRadius:12,padding:"11px 30px",fontWeight:700,cursor:"pointer",fontSize:12}}>
+                  ✦ Voir plus ({filtered.length-paginated.length})
                 </button>
               </div>
             )}
-            {filtered.length===0&&<div style={{textAlign:"center",padding:"50px 20px",color:"#ccc",fontSize:14}}>
-              {showFavsOnly?"Aucun favori enregistré — clique sur 🤍 sur une recette !":"Aucune recette trouvée"}
+            {filtered.length===0&&<div style={{textAlign:"center",padding:"50px 20px",color:"#ccc"}}>
+              {showFavsOnly?"Aucun favori — clique sur 🤍 pour en ajouter":"Aucune recette trouvée"}
             </div>}
-            <div style={{marginTop:16,padding:"11px 14px",background:"#faf7f4",borderRadius:12,display:"flex",gap:8,alignItems:"center"}}>
-              <span style={{fontSize:14}}>📋</span>
+            <div style={{marginTop:14,padding:"10px 13px",background:"#faf7f4",borderRadius:12,display:"flex",gap:8,alignItems:"center"}}>
+              <span style={{fontSize:13}}>📋</span>
               <span style={{fontSize:10,color:"#bbb"}}>Valeurs issues de la <strong style={{color:"#aaa"}}>Table Ciqual 2025</strong> (Anses)</span>
             </div>
-            <div style={{height:40}}/>
+            <div style={{height:36}}/>
           </div>
-
-          {/* DETAIL PANEL DESKTOP */}
+          {/* Desktop panel */}
           {!isMobile&&showDetail&&selected&&(
-            <div style={{position:"sticky",top:70}}>
-              <div style={{background:"#fff",border:"1.5px solid #ede8e3",borderRadius:22,overflow:"hidden",boxShadow:"0 12px 60px rgba(201,168,130,0.18)"}}>
+            <div style={{position:"sticky",top:68}}>
+              <div style={{background:"#fff",border:"1.5px solid #ede8e3",borderRadius:20,overflow:"hidden",boxShadow:"0 10px 50px rgba(201,168,130,0.18)"}}>
                 <SheetHeader/>
-                <div style={{maxHeight:"calc(100vh - 260px)",overflowY:"auto",padding:"20px 24px"}}>
+                <div style={{maxHeight:"calc(100vh - 250px)",overflowY:"auto",padding:"18px 22px"}}>
                   {renderDetailContent()}
                 </div>
               </div>
@@ -950,88 +1066,195 @@ export default function FitWomenApp(){
         </div>
       </div>
 
-      {/* DETAIL PANEL MOBILE (bottom sheet) */}
+      {/* ── DETAIL MOBILE ── */}
       {isMobile&&showDetail&&selected&&(
         <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>{setShowDetail(false);setSelected(null);}} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#fff",borderRadius:"22px 22px 0 0",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 -6px 40px rgba(0,0,0,0.18)",animation:"slideUp 0.25s ease"}}>
-            {/* Drag handle */}
-            <div onTouchStart={onSheetTouchStart} onTouchEnd={onSheetTouchEnd}
-              style={{padding:"10px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0,cursor:"grab"}}>
-              <div style={{width:38,height:4,borderRadius:99,background:"#e0d8d0"}}/>
+          <div style={{position:"relative",background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 -6px 40px rgba(0,0,0,0.18)",animation:"slideUp 0.25s ease"}}>
+            <div onTouchStart={onSheetTouchStart} onTouchEnd={onSheetTouchEnd} style={{padding:"10px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0,cursor:"grab"}}>
+              <div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/>
             </div>
             <SheetHeader/>
-            <div style={{overflowY:"auto",padding:"18px 18px 48px",flex:1,WebkitOverflowScrolling:"touch"}}>
+            <div style={{overflowY:"auto",padding:"16px 16px 48px",flex:1,WebkitOverflowScrolling:"touch"}}>
               {renderDetailContent()}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── PANIER (liste de courses) ── */}
+      {/* ── PICKER SEMAINIER ── */}
+      {showWeekPicker&&selected&&(
+        <div style={{position:"fixed",inset:0,zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div onClick={()=>setShowWeekPicker(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.5)"}}/>
+          <div style={{position:"relative",background:"#fff",borderRadius:20,padding:"20px",minWidth:280,maxWidth:340,width:"100%",animation:"fadeInScale 0.2s ease"}}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,marginBottom:4}}>{selected.emoji} Ajouter au semainier</div>
+            <div style={{fontSize:11,color:"#bbb",marginBottom:16}}>{selected.name}</div>
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Quel jour ?</div>
+              <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                {DAYS.map(d=>(
+                  <button key={d} onClick={()=>setWeekDay(d)}
+                    style={{padding:"6px 10px",border:`1.5px solid ${weekDay===d?ROSE:"#e8e2db"}`,borderRadius:10,background:weekDay===d?ROSE_L:"#fff",color:weekDay===d?"#8a6040":"#bbb",fontSize:11,fontWeight:700,cursor:"pointer"}}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{marginBottom:18}}>
+              <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Quel repas ?</div>
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {SLOTS.map(slot=>(
+                  <button key={slot} onClick={()=>{addToWeek(weekDay,slot,selected);setShowWeekPicker(false);}}
+                    style={{padding:"10px 14px",border:"1px solid #e8e2db",borderRadius:12,background:"#faf7f4",color:DARK,fontSize:12,fontWeight:600,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:8}}>
+                    <span>{SLOT_ICONS[slot]}</span>{slot}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button onClick={()=>setShowWeekPicker(false)} style={{width:"100%",padding:"10px",border:"none",borderRadius:12,background:"#f5f0ea",color:"#bbb",fontSize:12,fontWeight:700,cursor:"pointer"}}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── SEMAINIER ── */}
+      {showWeek&&(
+        <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+          <div onClick={()=>setShowWeek(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
+          <div style={{position:"relative",background:"#f9f6f2",borderRadius:"20px 20px 0 0",height:"90vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
+            {/* Header semainier */}
+            <div style={{background:DARK,borderRadius:"20px 20px 0 0",padding:"14px 18px",flexShrink:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff"}}>📆 Mon Semainier</div>
+                  <div style={{fontSize:10,color:ROSE,marginTop:2}}>Planifie tes repas de la semaine</div>
+                </div>
+                <div style={{display:"flex",gap:7,alignItems:"center"}}>
+                  <button onClick={()=>{if(window.confirm("Effacer toute la semaine ?"))clearWeek();}} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:10,fontWeight:700}}>Vider</button>
+                  <button onClick={()=>setShowWeek(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                </div>
+              </div>
+              {/* Onglets jours */}
+              <div style={{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}}>
+                {DAYS.map((d,i)=>{
+                  const tot=weekDayTotal(d);
+                  return(
+                    <button key={d} onClick={()=>setWeekDay(d)}
+                      style={{flexShrink:0,padding:"6px 10px",border:`1.5px solid ${weekDay===d?ROSE:"rgba(255,255,255,0.1)"}`,borderRadius:10,background:weekDay===d?"rgba(201,168,130,0.15)":"transparent",color:weekDay===d?ROSE:"#666",cursor:"pointer",textAlign:"center",minWidth:46}}>
+                      <div style={{fontSize:10,fontWeight:700}}>{d}</div>
+                      <div style={{fontSize:8,color:tot>0?(weekDay===d?ROSE:"#888"):"#444",marginTop:1}}>{tot>0?`${tot}k`:"-"}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Contenu jour sélectionné */}
+            <div style={{overflowY:"auto",flex:1,padding:"14px 16px 40px"}}>
+              {/* Total du jour */}
+              {(()=>{
+                const tot=weekDayTotal(weekDay);
+                const totMacros=SLOTS.reduce((acc,slot)=>week[weekDay][slot].reduce((a,r)=>{const m=r.macros||{p:0,c:0,f:0};return{p:a.p+m.p,c:a.c+m.c,f:a.f+m.f};},acc),{p:0,c:0,f:0});
+                return tot>0&&(
+                  <div style={{background:"#fff",borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",border:"1px solid #ede8e0",boxShadow:"0 2px 10px rgba(0,0,0,0.04)"}}>
+                    <div style={{fontSize:11,color:"#aaa",fontWeight:700}}>Total {DAYLABELS[DAYS.indexOf(weekDay)]}</div>
+                    <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:ROSE}}>{tot}<span style={{fontSize:9,color:"#ccc",marginLeft:1}}>kcal</span></div>
+                      {[["P",Math.round(totMacros.p),"#d4826a"],["G",Math.round(totMacros.c),"#7a9e87"],["L",Math.round(totMacros.f),"#b08a6e"]].map(([l,v,c])=>(
+                        <span key={l} style={{fontSize:10,color:c,fontWeight:700}}>{l}:{v}g</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* Slots */}
+              {SLOTS.map(slot=>(
+                <div key={slot} style={{marginBottom:14}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+                    <span style={{fontSize:16}}>{SLOT_ICONS[slot]}</span>
+                    <span style={{fontSize:11,fontWeight:700,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em"}}>{slot}</span>
+                    {week[weekDay][slot].length===0&&<span style={{fontSize:10,color:"#ddd",marginLeft:4}}>— vide</span>}
+                  </div>
+                  {week[weekDay][slot].map((item,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#fff",borderRadius:12,padding:"10px 12px",marginBottom:6,border:"1px solid #ede8e0",boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span style={{fontSize:18}}>{item.emoji}</span>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:600,color:DARK}}>{item.name}</div>
+                          {item.macros&&<div style={{fontSize:10,color:"#bbb"}}>{item.macros.cal} kcal · P:{item.macros.p}g G:{item.macros.c}g L:{item.macros.f}g</div>}
+                        </div>
+                      </div>
+                      <button onClick={()=>removeFromWeek(weekDay,slot,i)} style={{background:"#faf0f0",border:"none",borderRadius:8,width:26,height:26,cursor:"pointer",color:"#c88080",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                    </div>
+                  ))}
+                  {/* Bouton ajouter dans ce slot */}
+                  <button onClick={()=>{setShowWeek(false);setTimeout(()=>setShowDetail(!!selected),100);}}
+                    style={{width:"100%",padding:"7px",border:"1px dashed #e0d8d0",borderRadius:12,background:"transparent",color:"#ccc",fontSize:10,fontWeight:600,cursor:"pointer",marginTop:2}}>
+                    + Ajouter depuis une recette
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── PANIER ── */}
       {showCart&&(
         <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>setShowCart(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#fff",borderRadius:"22px 22px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
-            <div style={{padding:"16px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
-              <div style={{width:38,height:4,borderRadius:99,background:"#e0d8d0",marginBottom:14}}/>
-            </div>
-            <div style={{background:DARK,padding:"14px 20px",flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{position:"relative",background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
+            <div style={{padding:"12px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}><div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/></div>
+            <div style={{background:DARK,padding:"13px 18px",flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff"}}>🛒 Liste de courses</div>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:19,fontWeight:700,color:"#fff"}}>🛒 Liste de courses</div>
                 <div style={{fontSize:10,color:ROSE,marginTop:2}}>{cart.length} recette{cart.length>1?"s":""} · {shoppingList.length} ingrédient{shoppingList.length>1?"s":""}</div>
               </div>
-              <div style={{display:"flex",gap:8}}>
-                {cart.length>0&&<button onClick={clearCart} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:10,fontWeight:700}}>Vider</button>}
-                <button onClick={()=>setShowCart(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+              <div style={{display:"flex",gap:7}}>
+                {cart.length>0&&<button onClick={clearCart} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,padding:"5px 10px",cursor:"pointer",fontSize:10,fontWeight:700}}>Vider</button>}
+                <button onClick={()=>setShowCart(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
               </div>
             </div>
-            <div style={{overflowY:"auto",padding:"16px 20px 40px",flex:1}}>
+            <div style={{overflowY:"auto",padding:"14px 18px 40px",flex:1}}>
               {cart.length===0?(
                 <div style={{textAlign:"center",padding:"40px 20px",color:"#ccc"}}>
-                  <div style={{fontSize:36,marginBottom:12}}>🛒</div>
-                  <div style={{fontSize:14}}>Ton panier est vide</div>
-                  <div style={{fontSize:11,marginTop:6}}>Ajoute des recettes depuis le panneau détail</div>
+                  <div style={{fontSize:36,marginBottom:10}}>🛒</div>
+                  <div style={{fontSize:14}}>Panier vide</div>
+                  <div style={{fontSize:11,marginTop:5}}>Ajoute des recettes depuis le panneau détail</div>
                 </div>
               ):(
                 <>
-                  {/* Recettes dans le panier */}
-                  <div style={{marginBottom:20}}>
-                    <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Recettes sélectionnées</div>
+                  <div style={{marginBottom:18}}>
+                    <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Recettes sélectionnées</div>
                     {cart.map(item=>(
-                      <div key={item.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f5f0ea"}}>
+                      <div key={item.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid #f5f0ea"}}>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <span style={{fontSize:18}}>{item.emoji}</span>
+                          <span style={{fontSize:17}}>{item.emoji}</span>
                           <div>
                             <div style={{fontSize:12,fontWeight:600,color:DARK}}>{item.name}</div>
                             <div style={{fontSize:10,color:"#bbb"}}>×{item.qty} portion{item.qty>1?"s":""}</div>
                           </div>
                         </div>
-                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                          <button onClick={()=>setCart(c=>c.map(x=>x.id===item.id&&x.qty>1?{...x,qty:x.qty-1}:x))} style={{width:26,height:26,borderRadius:8,border:"1px solid #e8e2db",background:"#fff",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
-                          <span style={{fontSize:13,fontWeight:700,color:DARK,minWidth:16,textAlign:"center"}}>{item.qty}</span>
-                          <button onClick={()=>setCart(c=>c.map(x=>x.id===item.id?{...x,qty:x.qty+1}:x))} style={{width:26,height:26,borderRadius:8,border:"1px solid #e8e2db",background:"#fff",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
-                          <button onClick={()=>removeFromCart(item.id)} style={{width:26,height:26,borderRadius:8,border:"none",background:"#faf0f0",cursor:"pointer",fontSize:12,color:"#c88080",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                        <div style={{display:"flex",gap:5,alignItems:"center"}}>
+                          <button onClick={()=>setCart(c=>c.map(x=>x.id===item.id&&x.qty>1?{...x,qty:x.qty-1}:x))} style={{width:25,height:25,borderRadius:7,border:"1px solid #e8e2db",background:"#fff",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                          <span style={{fontSize:12,fontWeight:700,color:DARK,minWidth:14,textAlign:"center"}}>{item.qty}</span>
+                          <button onClick={()=>setCart(c=>c.map(x=>x.id===item.id?{...x,qty:x.qty+1}:x))} style={{width:25,height:25,borderRadius:7,border:"1px solid #e8e2db",background:"#fff",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                          <button onClick={()=>removeFromCart(item.id)} style={{width:25,height:25,borderRadius:7,border:"none",background:"#faf0f0",cursor:"pointer",fontSize:11,color:"#c88080",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                         </div>
                       </div>
                     ))}
                   </div>
-                  {/* Liste consolidée */}
                   <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Ingrédients à acheter</div>
+                    <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Ingrédients à acheter</div>
                     {shoppingList.map(({key,food,grams})=>{
                       const checked=checkedItems[key];
                       return(
                         <div key={key} onClick={()=>setCheckedItems(c=>({...c,[key]:!c[key]}))}
-                          style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #f5f0ea",cursor:"pointer",opacity:checked?0.4:1}}>
-                          <div style={{width:20,height:20,borderRadius:6,border:`2px solid ${checked?ROSE:"#e0d8d0"}`,background:checked?ROSE:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            {checked&&<span style={{color:"#fff",fontSize:11}}>✓</span>}
+                          style={{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:"1px solid #f5f0ea",cursor:"pointer",opacity:checked?0.4:1}}>
+                          <div style={{width:19,height:19,borderRadius:5,border:`2px solid ${checked?ROSE:"#e0d8d0"}`,background:checked?ROSE:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                            {checked&&<span style={{color:"#fff",fontSize:10}}>✓</span>}
                           </div>
-                          <span style={{fontSize:18}}>{food.emoji}</span>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:13,fontWeight:600,color:DARK,textDecoration:checked?"line-through":"none"}}>{food.name}</div>
-                          </div>
-                          <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:13,borderRadius:8,padding:"3px 10px",fontFamily:"'Cormorant Garamond',serif"}}>{grams}g</div>
+                          <span style={{fontSize:17}}>{food.emoji}</span>
+                          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:DARK,textDecoration:checked?"line-through":"none"}}>{food.name}</div></div>
+                          <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:12,borderRadius:8,padding:"2px 9px",fontFamily:"'Cormorant Garamond',serif"}}>{grams}g</div>
                         </div>
                       );
                     })}
@@ -1043,82 +1266,73 @@ export default function FitWomenApp(){
         </div>
       )}
 
-      {/* ── BUDGET CALORIQUE (mon journal) ── */}
+      {/* ── JOURNAL DU JOUR ── */}
       {showDailyPanel&&(
         <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
           <div onClick={()=>setShowDailyPanel(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.42)",backdropFilter:"blur(2px)"}}/>
-          <div style={{position:"relative",background:"#fff",borderRadius:"22px 22px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
-            <div style={{padding:"16px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}>
-              <div style={{width:38,height:4,borderRadius:99,background:"#e0d8d0",marginBottom:14}}/>
-            </div>
-            <div style={{background:DARK,padding:"14px 20px",flexShrink:0}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+          <div style={{position:"relative",background:"#fff",borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column",animation:"slideUp 0.25s ease"}}>
+            <div style={{padding:"12px 20px 0",display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0}}><div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/></div>
+            <div style={{background:DARK,padding:"13px 18px",flexShrink:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
                 <div>
-                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff"}}>📅 Mon journal du jour</div>
-                  <div style={{fontSize:10,color:ROSE,marginTop:2}}>{dailyRecipes.length} repas ajouté{dailyRecipes.length>1?"s":""}</div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:19,fontWeight:700,color:"#fff"}}>📅 Journal du jour</div>
+                  <div style={{fontSize:10,color:ROSE,marginTop:2}}>{dailyRecipes.length} repas · {dailyCal} kcal</div>
                 </div>
-                <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                  {dailyRecipes.length>0&&<button onClick={()=>setDailyRecipes([])} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,padding:"6px 10px",cursor:"pointer",fontSize:10,fontWeight:700}}>Réinitialiser</button>}
-                  <button onClick={()=>setShowDailyPanel(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                <div style={{display:"flex",gap:7,alignItems:"center"}}>
+                  {dailyRecipes.length>0&&<button onClick={()=>setDailyRecipes([])} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,padding:"5px 9px",cursor:"pointer",fontSize:10,fontWeight:700}}>Vider</button>}
+                  <button onClick={()=>setShowDailyPanel(false)} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"#888",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                 </div>
               </div>
-              {/* Objectif kcal */}
-              <div style={{background:"rgba(255,255,255,0.06)",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <div style={{fontSize:10,color:"#aaa",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em"}}>Objectif journalier</div>
+              <div style={{background:"rgba(255,255,255,0.06)",borderRadius:12,padding:"11px 13px"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+                  <div style={{fontSize:10,color:"#aaa",fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em"}}>Objectif</div>
                   {editingGoal?(
-                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <div style={{display:"flex",gap:5,alignItems:"center"}}>
                       <input type="number" value={tmpGoal} onChange={e=>setTmpGoal(+e.target.value)}
-                        style={{width:70,padding:"3px 8px",borderRadius:8,border:`1px solid ${ROSE}`,fontSize:12,fontWeight:700,color:DARK,textAlign:"center",outline:"none"}}/>
-                      <button onClick={()=>{setDailyGoal(tmpGoal);setEditingGoal(false);}} style={{background:ROSE,border:"none",borderRadius:8,color:"#fff",padding:"4px 10px",cursor:"pointer",fontSize:10,fontWeight:700}}>OK</button>
+                        style={{width:65,padding:"2px 7px",borderRadius:7,border:`1px solid ${ROSE}`,fontSize:12,fontWeight:700,color:DARK,textAlign:"center",outline:"none"}}/>
+                      <button onClick={()=>{setDailyGoalKcal(tmpGoal);setProfile(p=>({...p,calTarget:tmpGoal}));setEditingGoal(false);}} style={{background:ROSE,border:"none",borderRadius:7,color:"#fff",padding:"3px 9px",cursor:"pointer",fontSize:10,fontWeight:700}}>OK</button>
                     </div>
                   ):(
-                    <button onClick={()=>{setTmpGoal(dailyGoal);setEditingGoal(true);}} style={{background:"rgba(255,255,255,0.08)",border:"none",color:ROSE,borderRadius:8,padding:"4px 10px",cursor:"pointer",fontSize:10,fontWeight:700}}>
-                      {dailyGoal} kcal ✏️
-                    </button>
+                    <button onClick={()=>{setTmpGoal(dailyGoalKcal);setEditingGoal(true);}} style={{background:"rgba(255,255,255,0.08)",border:"none",color:ROSE,borderRadius:7,padding:"3px 9px",cursor:"pointer",fontSize:10,fontWeight:700}}>{dailyGoalKcal} kcal ✏️</button>
                   )}
                 </div>
-                {/* Barre de progression */}
-                <div style={{height:8,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden",marginBottom:6}}>
+                <div style={{height:7,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden",marginBottom:5}}>
                   <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>100?"linear-gradient(90deg,#e88080,#c06060)":dailyPct>80?"linear-gradient(90deg,#e8c080,#c09040)":"linear-gradient(90deg,#a0d4a8,#6b9e72)",borderRadius:99,transition:"width 0.4s ease"}}/>
                 </div>
-                <div style={{display:"flex",justifyContent:"space-between"}}>
-                  <span style={{fontSize:11,fontWeight:700,color:dailyPct>100?"#e88080":"#90d090"}}>{dailyCal} kcal consommées</span>
-                  <span style={{fontSize:11,color:"#666"}}>{dailyPct>100?`+${dailyCal-dailyGoal} dépassé`:`${remaining} restantes`}</span>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                  <span style={{fontSize:11,fontWeight:700,color:dailyPct>100?"#e88080":"#90d090"}}>{dailyCal} kcal</span>
+                  <span style={{fontSize:11,color:"#666"}}>{dailyPct>100?`+${dailyCal-dailyGoalKcal} dépassé`:`${remaining} restantes`}</span>
                 </div>
+                {dailyRecipes.length>0&&<div style={{display:"flex",gap:10,justifyContent:"center",paddingTop:8,borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+                  {[["P",Math.round(dailyTotals.p),"#d4826a"],["G",Math.round(dailyTotals.c),"#7a9e87"],["L",Math.round(dailyTotals.f),"#b08a6e"]].map(([l,v,c])=>(
+                    <div key={l} style={{textAlign:"center"}}>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:c}}>{v}g</div>
+                      <div style={{fontSize:9,color:"#666",textTransform:"uppercase"}}>{l}</div>
+                    </div>
+                  ))}
+                </div>}
               </div>
-              {/* Macros du jour */}
-              {dailyRecipes.length>0&&(
-                  <div style={{display:"flex",gap:12,justifyContent:"center"}}>
-                    {[["P",Math.round(dailyTotals.p),"#d4826a"],["G",Math.round(dailyTotals.c),"#7a9e87"],["L",Math.round(dailyTotals.f),"#b08a6e"]].map(([l,v,c])=>(
-                      <div key={l} style={{textAlign:"center"}}>
-                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:c}}>{v}g</div>
-                        <div style={{fontSize:9,color:"#666",textTransform:"uppercase"}}>{l}</div>
-                      </div>
-                    ))}
-                  </div>
-              )}
             </div>
-            <div style={{overflowY:"auto",padding:"16px 20px 40px",flex:1}}>
+            <div style={{overflowY:"auto",padding:"14px 18px 40px",flex:1}}>
               {dailyRecipes.length===0?(
                 <div style={{textAlign:"center",padding:"40px 20px",color:"#ccc"}}>
-                  <div style={{fontSize:36,marginBottom:12}}>📅</div>
+                  <div style={{fontSize:36,marginBottom:10}}>📅</div>
                   <div style={{fontSize:14}}>Aucun repas enregistré</div>
-                  <div style={{fontSize:11,marginTop:6}}>Clique sur "Ajouter au jour" dans une recette</div>
+                  <div style={{fontSize:11,marginTop:5}}>Clique sur "Ajouter au jour" dans une recette</div>
                 </div>
               ):(
                 dailyRecipes.map((r,i)=>{
                   const m=r.macros||computeMacros(r.ingredients);
                   return(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"11px 0",borderBottom:"1px solid #f5f0ea"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:20}}>{r.emoji}</span>
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 0",borderBottom:"1px solid #f5f0ea"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:9}}>
+                        <span style={{fontSize:19}}>{r.emoji}</span>
                         <div>
                           <div style={{fontSize:12,fontWeight:600,color:DARK}}>{r.name}</div>
                           <div style={{fontSize:10,color:"#bbb"}}>{m.cal} kcal · P:{m.p}g G:{m.c}g L:{m.f}g</div>
                         </div>
                       </div>
-                      <button onClick={()=>removeFromDay(i)} style={{background:"#faf0f0",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer",color:"#c88080",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                      <button onClick={()=>removeFromDay(i)} style={{background:"#faf0f0",border:"none",borderRadius:8,width:27,height:27,cursor:"pointer",color:"#c88080",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
                     </div>
                   );
                 })
@@ -1127,6 +1341,132 @@ export default function FitWomenApp(){
           </div>
         </div>
       )}
+
+      {/* ── ONBOARDING ── */}
+      {showOnboarding&&(
+        <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(6px)"}}/>
+          <div style={{position:"relative",background:"#fff",borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,padding:"28px 28px 40px",animation:"slideUp 0.35s ease"}}>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${ROSE},#e8c4a0)`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}}>
+                <span style={{fontFamily:"'Cormorant Garamond',serif",fontWeight:800,fontSize:16,color:DARK}}>FW</span>
+              </div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:DARK,marginBottom:4}}>Bienvenue ✨</div>
+              <div style={{fontSize:12,color:"#bbb",lineHeight:1.6}}>Personnalise ton expérience nutrition<br/>en quelques secondes</div>
+            </div>
+            {obStep===0&&<>
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>Ton prénom (optionnel)</div>
+                <input placeholder="Ex: Sophie" value={obName} onChange={e=>setObName(e.target.value)}
+                  style={{width:"100%",padding:"12px 16px",border:"1.5px solid #e8e2db",borderRadius:14,fontSize:14,outline:"none",color:DARK,fontFamily:"'Jost',sans-serif"}}/>
+              </div>
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>Ton objectif principal</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {Object.entries(GOALS).map(([k,cfg])=>(
+                    <button key={k} onClick={()=>setObGoal(k)}
+                      style={{display:"flex",alignItems:"center",gap:14,padding:"13px 16px",border:`1.5px solid ${obGoal===k?ROSE:"#e8e2db"}`,borderRadius:14,background:obGoal===k?ROSE_L:"#fff",cursor:"pointer",textAlign:"left",transition:"all 0.15s"}}>
+                      <span style={{fontSize:22}}>{cfg.emoji}</span>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:700,color:obGoal===k?"#8a6040":DARK}}>{cfg.label}</div>
+                        <div style={{fontSize:10,color:"#bbb",marginTop:1}}>{cfg.desc}</div>
+                      </div>
+                      {obGoal===k&&<div style={{marginLeft:"auto",color:ROSE,fontWeight:800,fontSize:16}}>✓</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={()=>setObStep(1)}
+                style={{width:"100%",padding:"14px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                Continuer →
+              </button>
+            </>}
+            {obStep===1&&<>
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Objectif calorique journalier</div>
+                <div style={{fontSize:11,color:"#bbb",marginBottom:14,lineHeight:1.6}}>
+                  {obGoal==="seche"?"En sèche, un déficit de 300-500 kcal est recommandé.":obGoal==="muscle"?"En prise de masse, un surplus de 200-400 kcal est idéal.":"En maintien, vise ton métabolisme total estimé."}
+                </div>
+                {/* Suggestions rapides */}
+                <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:14}}>
+                  {(obGoal==="seche"?[1400,1600,1800]:obGoal==="muscle"?[2000,2200,2500]:[1700,2000,2300]).map(v=>(
+                    <button key={v} onClick={()=>setObCal(v)}
+                      style={{padding:"7px 14px",border:`1.5px solid ${obCal===v?ROSE:"#e8e2db"}`,borderRadius:99,background:obCal===v?ROSE_L:"#fff",color:obCal===v?"#8a6040":"#bbb",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                      {v} kcal
+                    </button>
+                  ))}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <input type="number" value={obCal} min={1000} max={4000} step={50} onChange={e=>setObCal(+e.target.value)}
+                    style={{flex:1,padding:"11px 14px",border:"1.5px solid #e8e2db",borderRadius:12,fontSize:16,fontWeight:700,color:DARK,textAlign:"center",outline:"none",fontFamily:"'Cormorant Garamond',serif"}}/>
+                  <span style={{fontSize:12,color:"#aaa",fontWeight:600,flexShrink:0}}>kcal / jour</span>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>setObStep(0)} style={{flex:"0 0 auto",padding:"13px 18px",background:"#f5f0ea",color:"#aaa",border:"none",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>← Retour</button>
+                <button onClick={finishOnboarding}
+                  style={{flex:1,padding:"13px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                  C'est parti ! 🚀
+                </button>
+              </div>
+            </>}
+          </div>
+        </div>
+      )}
+
+      {/* ── PANNEAU PROFIL (accessible à tout moment) ── */}
+      {showProfile&&(
+        <div style={{position:"fixed",inset:0,zIndex:600,display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div onClick={()=>setShowProfile(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(4px)"}}/>
+          <div style={{position:"relative",background:"#fff",borderRadius:"24px 24px 0 0",width:"100%",maxWidth:480,animation:"slideUp 0.28s ease"}}>
+            <div style={{padding:"12px 20px 0",display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:36,height:4,borderRadius:99,background:"#e0d8d0"}}/></div>
+            {(true&&(
+                <div style={{padding:"20px 24px 36px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700}}>👤 Mon profil</div>
+                    <button onClick={()=>setShowProfile(false)} style={{background:"#f5f0ea",border:"none",borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center",color:"#aaa"}}>✕</button>
+                  </div>
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Prénom</div>
+                    <input value={pName} onChange={e=>setPName(e.target.value)} placeholder="Ex: Sophie"
+                      style={{width:"100%",padding:"11px 14px",border:"1.5px solid #e8e2db",borderRadius:12,fontSize:13,outline:"none",color:DARK,fontFamily:"'Jost',sans-serif"}}/>
+                  </div>
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Objectif</div>
+                    <div style={{display:"flex",gap:7}}>
+                      {Object.entries(GOALS).map(([k,cfg])=>(
+                        <button key={k} onClick={()=>setPGoal(k)}
+                          style={{flex:1,padding:"9px 6px",border:`1.5px solid ${pGoal===k?ROSE:"#e8e2db"}`,borderRadius:12,background:pGoal===k?ROSE_L:"#fff",color:pGoal===k?"#8a6040":"#bbb",cursor:"pointer",textAlign:"center",transition:"all 0.15s"}}>
+                          <div style={{fontSize:18,marginBottom:2}}>{cfg.emoji}</div>
+                          <div style={{fontSize:9,fontWeight:700,textTransform:"uppercase"}}>{cfg.label}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{marginBottom:22}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Objectif calorique</div>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <input type="number" value={pCal} onChange={e=>setPCal(+e.target.value)} min={1000} max={4000} step={50}
+                        style={{flex:1,padding:"10px 14px",border:"1.5px solid #e8e2db",borderRadius:12,fontSize:16,fontWeight:700,color:DARK,textAlign:"center",outline:"none",fontFamily:"'Cormorant Garamond',serif"}}/>
+                      <span style={{fontSize:12,color:"#aaa",flexShrink:0}}>kcal / jour</span>
+                    </div>
+                  </div>
+                  <button onClick={()=>saveProfile({name:pName,goal:pGoal,calTarget:pCal,done:true})}
+                    style={{width:"100%",padding:"13px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                    ✓ Enregistrer
+                  </button>
+                  <button onClick={()=>{setShowProfile(false);setShowOnboarding(true);setObStep(0);}} style={{width:"100%",marginTop:8,padding:"10px",background:"#f5f0ea",color:"#aaa",border:"none",borderRadius:14,fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                    Refaire l'onboarding
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Fermer le dropdown tri au clic extérieur */}
+      {showSortPanel&&<div style={{position:"fixed",inset:0,zIndex:90}} onClick={()=>setShowSortPanel(false)}/>}
     </div>
   );
 }
