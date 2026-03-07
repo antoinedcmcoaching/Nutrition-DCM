@@ -487,27 +487,7 @@ export default function FitWomenApp(){
     return()=>window.removeEventListener("resize",onResize);
   },[]);
 
-  // Swipe to close + navigate on mobile
-  const touchRef=useRef({});
-  const handleTouchStart=useCallback((e)=>{
-    touchRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};
-  },[]);
-  const handleTouchEnd=useCallback((e)=>{
-    const dx=e.changedTouches[0].clientX-touchRef.current.x;
-    const dy=e.changedTouches[0].clientY-touchRef.current.y;
-    const dt=Date.now()-touchRef.current.t;
-    if(dt>500)return;
-    // Swipe down → ferme le panneau
-    if(dy>80&&Math.abs(dx)<60){setShowDetail(false);setSelected(null);return;}
-    // Swipe gauche/droite → recette suivante/précédente
-    if(Math.abs(dx)>60&&Math.abs(dy)<80&&selected){
-      const idx=filtered.findIndex(r=>r.id===selected.id);
-      if(dx<0&&idx<filtered.length-1)selectRecipe(filtered[idx+1]);
-      if(dx>0&&idx>0)selectRecipe(filtered[idx-1]);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[selected]);
-
+  // ⚠️ filtered DOIT être déclaré avant les touch handlers (closure)
   const filtered=useMemo(()=>ALL_RECIPES.filter(r=>
     r.goal===activeGoal&&
     (activeMeal==="Tous"||r.meal===activeMeal)&&
@@ -524,6 +504,49 @@ export default function FitWomenApp(){
   },[]);
 
   const setSlider=useCallback((key,val)=>{setSliders(s=>({...s,[key]:val}));setCustomized(true);},[]);
+
+  // Touch handlers — uniquement sur la drag handle, pas sur le contenu scrollable
+  const touchRef=useRef({});
+  const filteredRef=useRef(filtered);
+  useEffect(()=>{filteredRef.current=filtered;},[filtered]);
+
+  const handleDragTouchStart=useCallback((e)=>{
+    touchRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};
+  },[]);
+
+  const handleDragTouchEnd=useCallback((e)=>{
+    const dx=e.changedTouches[0].clientX-touchRef.current.x;
+    const dy=e.changedTouches[0].clientY-touchRef.current.y;
+    const dt=Date.now()-touchRef.current.t;
+    if(dt>600)return;
+    // Glisser bas → ferme
+    if(dy>60&&Math.abs(dx)<80){
+      setShowDetail(false);setSelected(null);return;
+    }
+    // Glisser gauche/droite → recette suivante/précédente
+    if(Math.abs(dx)>70&&Math.abs(dy)<60){
+      const list=filteredRef.current;
+      setSelected(prev=>{
+        if(!prev)return prev;
+        const idx=list.findIndex(r=>r.id===prev.id);
+        if(dx<0&&idx<list.length-1){
+          const next=list[idx+1];
+          const m=computeMacros(next.ingredients);
+          setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});
+          setCustomized(false);setActiveTab("recette");
+          return next;
+        }
+        if(dx>0&&idx>0){
+          const prev2=list[idx-1];
+          const m=computeMacros(prev2.ingredients);
+          setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});
+          setCustomized(false);setActiveTab("recette");
+          return prev2;
+        }
+        return prev;
+      });
+    }
+  },[]);
 
   const adjIngredients=useMemo(()=>selected?adjustRecipe(selected.ingredients,sliders):null,[selected,sliders]);
   const adjMacros=useMemo(()=>adjIngredients?computeMacros(adjIngredients):null,[adjIngredients]);
@@ -776,22 +799,23 @@ export default function FitWomenApp(){
           {showDetail&&selected&&(
             isMobile?(
               // MOBILE: overlay bottom sheet
-              <div
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-                {/* Backdrop */}
+              <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+                {/* Backdrop - tap pour fermer */}
                 <div onClick={()=>{setShowDetail(false);setSelected(null);}}
                   style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.45)",backdropFilter:"blur(2px)"}}/>
                 {/* Sheet */}
                 <div style={{position:"relative",background:"#fff",borderRadius:"24px 24px 0 0",maxHeight:"92vh",display:"flex",flexDirection:"column",boxShadow:"0 -8px 40px rgba(0,0,0,0.18)",animation:"slideUp 0.28s ease"}}>
                   <style>{`@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
-                  {/* Drag handle */}
-                  <div style={{display:"flex",justifyContent:"center",padding:"12px 0 4px"}}>
-                    <div style={{width:40,height:4,borderRadius:99,background:"#e0d8d0"}}/>
+                  {/* ✅ Drag handle UNIQUEMENT ici : les touch events, pas sur le contenu scrollable */}
+                  <div
+                    onTouchStart={handleDragTouchStart}
+                    onTouchEnd={handleDragTouchEnd}
+                    style={{padding:"14px 20px 8px",cursor:"grab",userSelect:"none"}}>
+                    <div style={{display:"flex",justifyContent:"center",marginBottom:6}}>
+                      <div style={{width:40,height:4,borderRadius:99,background:"#e0d8d0"}}/>
+                    </div>
+                    <div style={{textAlign:"center",fontSize:9,color:"#ccc",letterSpacing:"0.1em"}}>↓ FERMER · ← → NAVIGUER</div>
                   </div>
-                  {/* Swipe hint */}
-                  <div style={{textAlign:"center",fontSize:9,color:"#ccc",letterSpacing:"0.1em",marginBottom:4}}>GLISSER BAS POUR FERMER · GAUCHE/DROITE POUR NAVIGUER</div>
                   {/* Header */}
                   <div style={{background:DARK,padding:"16px 20px"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
