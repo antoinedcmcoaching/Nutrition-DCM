@@ -873,7 +873,7 @@ export default function FitWomenApp(){
             </button>
           ))}
         </div>
-        {isMobile&&<div style={{textAlign:"center",marginTop:7,fontSize:8,color:"#333",letterSpacing:"0.12em"}}>↓ GLISSER POUR FERMER &nbsp;·&nbsp; ← → NAVIGUER</div>}
+        {isMobile&&<div style={{textAlign:"center",marginTop:8,fontSize:9,color:"rgba(255,255,255,0.4)",letterSpacing:"0.14em",fontWeight:500}}>↓ GLISSER POUR FERMER &nbsp;·&nbsp; ← → NAVIGUER</div>}
       </div>
     );
   }
@@ -890,49 +890,58 @@ export default function FitWomenApp(){
         @keyframes slideFromRight{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes slideFromLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes fadeInScale{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+        @media(max-width:400px){.budget-label{display:none!important}.budget-bar-wrap{width:48px!important}}
       `}</style>
 
       {/* ── HEADER ── */}
-      <div style={{background:DARK,padding:"11px 18px",position:"sticky",top:0,zIndex:200,boxShadow:"0 2px 20px rgba(0,0,0,0.3)"}}>
-        <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
-            <div style={{width:32,height:32,borderRadius:"50%",background:`linear-gradient(135deg,${ROSE},#e8c4a0)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              <span style={{color:DARK,fontWeight:800,fontSize:10,fontFamily:"'Cormorant Garamond',serif"}}>FW</span>
+      <div style={{background:DARK,padding:"14px 20px",position:"sticky",top:0,zIndex:200,boxShadow:"0 2px 24px rgba(0,0,0,0.4)",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+          {/* Logo + titre */}
+          <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
+            <div style={{width:38,height:38,borderRadius:"50%",background:`linear-gradient(135deg,${ROSE},#e8c4a0)`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:`0 0 12px ${ROSE}55`}}>
+              <span style={{color:DARK,fontWeight:800,fontSize:11,fontFamily:"'Cormorant Garamond',serif"}}>FW</span>
             </div>
             <div style={{minWidth:0}}>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,color:"#fff",letterSpacing:"0.1em",textTransform:"uppercase",whiteSpace:"nowrap"}}>Fitwomen</div>
-              {profile.name&&<div style={{fontSize:8,color:"#555",letterSpacing:"0.1em",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>Bonjour {profile.name} 👋</div>}
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"0.12em",textTransform:"uppercase",lineHeight:1}}>Fitwomen</div>
+              {profile.name
+                ? <div style={{fontSize:11,color:ROSE,letterSpacing:"0.04em",marginTop:3,fontWeight:600}}>Bonjour {profile.name} 👋</div>
+                : <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.14em",marginTop:2,textTransform:"uppercase"}}>Bibliothèque Ciqual 2025</div>
+              }
             </div>
           </div>
-          <div style={{display:"flex",gap:6,alignItems:"center",flexShrink:0}}>
+          {/* Actions — version mobile compacte / desktop complète */}
+          <div style={{display:"flex",gap:7,alignItems:"center",flexShrink:0}}>
             {/* Semainier */}
-            <button onClick={()=>setShowWeek(true)}
-              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <button onClick={()=>setShowWeek(true)} title="Semainier"
+              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               📆
             </button>
-            {/* Budget journalier — redesigné pour lisibilité */}
-            <button onClick={()=>setShowDailyPanel(true)}
-              style={{display:"flex",alignItems:"center",gap:8,background:dailyPct>90?"rgba(232,128,128,0.15)":dailyPct>0?"rgba(144,210,144,0.12)":"rgba(255,255,255,0.06)",border:`1px solid ${dailyPct>90?"rgba(232,128,128,0.5)":dailyPct>0?"rgba(144,210,144,0.4)":"rgba(255,255,255,0.12)"}`,borderRadius:10,padding:"6px 11px",cursor:"pointer",minWidth:0}}>
-              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3}}>
+            {/* Budget journalier */}
+            <button onClick={()=>setShowDailyPanel(true)} title="Journal du jour"
+              style={{display:"flex",alignItems:"center",gap:9,background:dailyPct>90?"rgba(240,128,128,0.18)":dailyPct>0?"rgba(128,208,128,0.14)":"rgba(255,255,255,0.07)",border:`1.5px solid ${dailyPct>90?"rgba(240,128,128,0.55)":dailyPct>0?"rgba(128,208,128,0.45)":"rgba(255,255,255,0.14)"}`,borderRadius:11,padding:"7px 13px",cursor:"pointer",flexShrink:0}}>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:4}}>
-                  <span style={{fontSize:13,fontWeight:800,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#fff",fontFamily:"'Cormorant Garamond',serif",lineHeight:1}}>{dailyCal}</span>
-                  <span style={{fontSize:9,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#888",lineHeight:1}}>/ {dailyGoalKcal} kcal</span>
+                  <span style={{fontSize:15,fontWeight:800,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#fff",fontFamily:"'Cormorant Garamond',serif",lineHeight:1}}>{dailyCal}</span>
+                  <span style={{fontSize:10,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"rgba(255,255,255,0.5)",lineHeight:1}}>/ {dailyGoalKcal}</span>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",lineHeight:1}}>kcal</span>
                 </div>
-                <div style={{width:64,height:3,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#f08080":dailyPct>50?"#e8d080":"#80d080",borderRadius:99,transition:"width 0.4s"}}/>
+                <div style={{width:72,height:4,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden"}} className="budget-bar-wrap">
+                  <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#f08080":dailyPct>60?"#e8d070":"#80d080",borderRadius:99,transition:"width 0.4s"}}/>
                 </div>
-                <span style={{fontSize:8,fontWeight:600,color:dailyPct>90?"#f08080":remaining>0?"#80c080":"#80d080",lineHeight:1,whiteSpace:"nowrap"}}>{dailyPct>100?`⚠ +${dailyCal-dailyGoalKcal} kcal`:remaining>0?`${remaining} kcal restantes`:"✓ Objectif atteint"}</span>
+                <span className="budget-label" style={{fontSize:9,fontWeight:600,color:dailyPct>90?"#f08080":remaining>0?"#80c880":"#80d080",lineHeight:1,whiteSpace:"nowrap"}}>
+                  {dailyPct>100?`⚠ +${dailyCal-dailyGoalKcal} kcal`:remaining>0?`${remaining} restantes`:"✓ Atteint"}
+                </span>
               </div>
             </button>
             {/* Panier */}
-            <button onClick={()=>setShowCart(true)}
-              style={{position:"relative",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <button onClick={()=>setShowCart(true)} title="Liste de courses"
+              style={{position:"relative",background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               🛒
-              {cart.length>0&&<div style={{position:"absolute",top:-4,right:-4,width:15,height:15,borderRadius:"50%",background:ROSE,color:"#fff",fontSize:8,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{cart.length}</div>}
+              {cart.length>0&&<div style={{position:"absolute",top:-5,right:-5,width:17,height:17,borderRadius:"50%",background:ROSE,color:"#fff",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>{cart.length}</div>}
             </button>
             {/* Profil */}
-            <button onClick={()=>setShowProfile(true)}
-              style={{background:"rgba(255,255,255,0.06)",border:`1px solid ${ROSE}44`,borderRadius:10,width:36,height:36,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <button onClick={()=>setShowProfile(true)} title="Mon profil"
+              style={{background:"rgba(255,255,255,0.08)",border:`1.5px solid ${ROSE}66`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               👤
             </button>
           </div>
@@ -974,26 +983,29 @@ export default function FitWomenApp(){
               ❤️ Favoris{favorites.length>0?` (${favorites.length})`:""}
             </button>
           </div>
-          {/* Tags + Tri */}
-          <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+          {/* Tags + Tri — séparés pour mobile */}
+          <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center",marginBottom:6}}>
             {ALL_TAGS.map(tag=>(
               <button key={tag} onClick={()=>{setActiveTagFilter(t=>t===tag?null:tag);setPage(1);}}
-                style={{padding:"4px 10px",border:"1px solid",borderColor:activeTagFilter===tag?"#8060a0":"#e8e2db",borderRadius:99,background:activeTagFilter===tag?"#f5f0f8":"#fff",color:activeTagFilter===tag?"#8060a0":"#ccc",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
+                style={{padding:"5px 11px",border:"1px solid",borderColor:activeTagFilter===tag?"#8060a0":"#e8e2db",borderRadius:99,background:activeTagFilter===tag?"#f5f0f8":"#fff",color:activeTagFilter===tag?"#8060a0":"#999",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s",whiteSpace:"nowrap"}}>
                 {tag}
               </button>
             ))}
-            {/* Tri */}
-            <div style={{marginLeft:"auto",position:"relative"}}>
+          </div>
+          {/* Tri — ligne dédiée, toujours visible */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8}}>
+            <span style={{fontSize:10,color:"#ccc",fontWeight:500}}>{filtered.length} recette{filtered.length>1?"s":""}</span>
+            <div style={{position:"relative"}}>
               <button onClick={()=>setShowSortPanel(s=>!s)}
-                style={{padding:"4px 11px",border:`1px solid ${sortBy!=="default"?ROSE:"#e8e2db"}`,borderRadius:99,background:sortBy!=="default"?ROSE_L:"#fff",color:sortBy!=="default"?"#8a6040":"#bbb",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap"}}>
-                ↕ Trier
+                style={{padding:"6px 14px",border:`1.5px solid ${sortBy!=="default"?ROSE:"#e8e2db"}`,borderRadius:99,background:sortBy!=="default"?ROSE_L:"#fff",color:sortBy!=="default"?"#8a6040":"#999",fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
+                <span>↕</span> <span>{sortBy==="default"?"Trier":sortBy==="cal_asc"?"Cal ↑":sortBy==="cal_desc"?"Cal ↓":"Prot ↓"}</span>
               </button>
               {showSortPanel&&(
-                <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",background:"#fff",border:"1px solid #e8e2db",borderRadius:14,boxShadow:"0 8px 30px rgba(0,0,0,0.1)",zIndex:100,minWidth:170,overflow:"hidden",animation:"fadeInScale 0.15s ease"}}>
+                <div style={{position:"absolute",right:0,top:"calc(100% + 6px)",background:"#fff",border:"1px solid #e8e2db",borderRadius:14,boxShadow:"0 8px 30px rgba(0,0,0,0.12)",zIndex:100,minWidth:175,overflow:"hidden",animation:"fadeInScale 0.15s ease"}}>
                   {[["default","Par défaut"],["cal_asc","Calories ↑"],["cal_desc","Calories ↓"],["prot_desc","Protéines ↓"]].map(([v,l])=>(
                     <button key={v} onClick={()=>{setSortBy(v);setShowSortPanel(false);}}
-                      style={{display:"block",width:"100%",textAlign:"left",padding:"10px 16px",border:"none",background:sortBy===v?ROSE_L:"#fff",color:sortBy===v?"#8a6040":DARK,fontFamily:"'Jost',sans-serif",fontSize:12,fontWeight:sortBy===v?700:400,cursor:"pointer",borderBottom:"1px solid #f5f0ea"}}>
-                      {sortBy===v?"✓ ":""}{l}
+                      style={{display:"block",width:"100%",textAlign:"left",padding:"11px 16px",border:"none",background:sortBy===v?ROSE_L:"#fff",color:sortBy===v?"#8a6040":DARK,fontFamily:"'Jost',sans-serif",fontSize:12,fontWeight:sortBy===v?700:400,cursor:"pointer",borderBottom:"1px solid #f5f0ea"}}>
+                      {sortBy===v?"✓  ":""}{l}
                     </button>
                   ))}
                 </div>
