@@ -1119,38 +1119,6 @@ export default function FitWomenApp(){
             </div>
           </div>
 
-          {/* ── GOAL TABS HEADER (desktop only) ── */}
-          <div className="desktop-only" style={{display:"flex",gap:6,flex:1,justifyContent:"flex-start"}}>
-            {Object.entries(GOALS).map(([key,cfg])=>(
-              <button key={key} onClick={()=>{
-                  const order=["seche","maintien","muscle"];
-                  const prev=prevGoalRef.current;
-                  const fromIdx=order.indexOf(prev);
-                  const toIdx=order.indexOf(key);
-                  if(fromIdx!==toIdx){const dir=toIdx>fromIdx?"left":"right";setGoalAnim(dir);setTimeout(()=>setGoalAnim(null),350);}
-                  prevGoalRef.current=key;
-                  setActiveGoal(key);setShowCoaching(false);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");
-                }}
-                style={{
-                  display:"flex",alignItems:"center",gap:7,
-                  padding:"7px 14px",
-                  border:`1.5px solid ${activeGoal===key?cfg.color:cfg.color+"44"}`,
-                  borderRadius:99,
-                  background:activeGoal===key?cfg.color+"22":"rgba(255,255,255,0.04)",
-                  color:activeGoal===key?cfg.color:"rgba(255,255,255,0.45)",
-                  fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:12,
-                  cursor:"pointer",
-                  transition:"all 0.2s",
-                  whiteSpace:"nowrap",
-                  boxShadow:activeGoal===key?`0 2px 12px ${cfg.color}44`:"none",
-                }}>
-                <span style={{fontSize:16,lineHeight:1}}>{cfg.emoji}</span>
-                <span style={{letterSpacing:"0.04em"}}>{cfg.label}</span>
-                {activeGoal===key&&<span style={{width:6,height:6,borderRadius:"50%",background:cfg.color,flexShrink:0,boxShadow:`0 0 6px ${cfg.color}`}}/>}
-              </button>
-            ))}
-          </div>
-
           {/* Actions — version mobile compacte / desktop complète */}
           <div style={{display:"flex",gap:7,alignItems:"center",flexShrink:0}}>
             {/* Budget journalier */}
@@ -1211,8 +1179,8 @@ export default function FitWomenApp(){
           );
         })()}
 
-        {/* ── GOAL TABS (mobile only) ── */}
-        <div className="mobile-only" style={{display:"flex",gap:10,padding:"14px 0 0"}}>
+        {/* ── GOAL TABS ── */}
+        <div style={{display:"flex",gap:10,padding:"14px 0 0"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
             <button key={key} onClick={()=>{
                 const order=["seche","maintien","muscle"];
@@ -2103,3 +2071,4 @@ export default function FitWomenApp(){
     </div>
   );
 }
+
