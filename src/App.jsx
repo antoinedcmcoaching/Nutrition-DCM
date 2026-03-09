@@ -1180,7 +1180,7 @@ export default function FitWomenApp(){
         })()}
 
         {/* ── GOAL TABS ── */}
-        <div style={{display:"flex",gap:10,padding:"14px 0 0"}}>
+        <div style={{display:"flex",gap:10,padding:"14px 0 18px"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
             <button key={key} onClick={()=>{
                 const order=["seche","maintien","muscle"];
@@ -2071,4 +2071,3 @@ export default function FitWomenApp(){
     </div>
   );
 }
-
