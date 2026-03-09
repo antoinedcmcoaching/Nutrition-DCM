@@ -1153,11 +1153,6 @@ export default function FitWomenApp(){
 
           {/* Actions — version mobile compacte / desktop complète */}
           <div style={{display:"flex",gap:7,alignItems:"center",flexShrink:0}}>
-            {/* Semainier - masqué mobile (bottom nav) */}
-            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
-              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              📆
-            </button>
             {/* Budget journalier */}
             <button onClick={()=>setShowDailyPanel(true)} title="Journal du jour"
               style={{display:"flex",alignItems:"center",gap:9,background:dailyPct>90?"rgba(240,128,128,0.18)":dailyPct>0?"rgba(128,208,128,0.14)":"rgba(255,255,255,0.07)",border:`1.5px solid ${dailyPct>90?"rgba(240,128,128,0.55)":dailyPct>0?"rgba(128,208,128,0.45)":"rgba(255,255,255,0.14)"}`,borderRadius:11,padding:"7px 13px",cursor:"pointer",flexShrink:0}}>
@@ -1174,6 +1169,11 @@ export default function FitWomenApp(){
                   {dailyPct>100?`⚠ +${dailyCal-dailyGoalKcal} kcal`:remaining>0?`${remaining} restantes`:"✓ Atteint"}
                 </span>
               </div>
+            </button>
+            {/* Semainier - masqué mobile (bottom nav) */}
+            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
+              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              📆
             </button>
             {/* Panier - masqué mobile (bottom nav) */}
             <button onClick={()=>setShowCart(true)} title="Liste de courses" className="header-icon-hide"
