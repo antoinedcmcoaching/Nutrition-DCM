@@ -580,6 +580,11 @@ export default function FitWomenApp(){
   const [obName,setObName]=useState("");
   const [obGoal,setObGoal]=useState("seche");
   const [obCal,setObCal]=useState(1600);
+  const [obAge,setObAge]=useState(0);
+  const [obWeight,setObWeight]=useState(0);
+  const [obHeight,setObHeight]=useState(0);
+  const [obActivity,setObActivity]=useState("moderate");
+  const [obCalMode,setObCalMode]=useState("tdee"); // "tdee" | "manual" 
 
   // ── Favoris ──
   const [favorites,setFavorites]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_favs")||"[]");}catch{return[];}});
@@ -618,6 +623,9 @@ export default function FitWomenApp(){
 
   // ── Animations swipe ──
   const [swipeAnim,setSwipeAnim]=useState(null); // 'left'|'right'|null
+  // ── Timers cuisson ──
+  const [timers,setTimers]=useState({}); // {stepIdx: {total, remaining, running}}
+  const timerRefs=useRef({});
   const [goalAnim,setGoalAnim]=useState(null); // direction slide entre objectifs
   const prevGoalRef=useRef(activeGoal);
 
@@ -729,6 +737,7 @@ export default function FitWomenApp(){
     const m=computeMacros(r.ingredients);
     setSliders({p:Math.round(m.p),c:Math.round(m.c),f:Math.round(m.f)});
     setSelected(r);setCustomized(false);setShowDetail(true);setActiveTab("recette");
+    Object.values(timerRefs.current).forEach(id=>clearInterval(id));timerRefs.current={};setTimers({});
   },[]);
   const setSlider=useCallback((key,val)=>{setSliders(s=>({...s,[key]:val}));setCustomized(true);},[]);
 
@@ -820,6 +829,43 @@ export default function FitWomenApp(){
     rec.start();
   },[]);
 
+  // ── Logique timers de cuisson ──────────────────────────
+  const parseStepDuration=(step)=>{
+    // Cherche "X min", "X-Y min", "X à Y min"
+    const m=step.match(/(\d+)(?:\s*[-àa]\s*(\d+))?\s*min/i);
+    if(!m)return null;
+    // Prend la valeur médiane si plage (ex: 3-4 min → 3 min 30s)
+    const lo=parseInt(m[1]);
+    const hi=m[2]?parseInt(m[2]):lo;
+    return Math.round((lo+hi)/2)*60;
+  };
+  const startTimer=(idx,seconds)=>{
+    if(timerRefs.current[idx])clearInterval(timerRefs.current[idx]);
+    setTimers(t=>({...t,[idx]:{total:seconds,remaining:seconds,running:true}}));
+    timerRefs.current[idx]=setInterval(()=>{
+      setTimers(t=>{
+        const cur=t[idx];
+        if(!cur||!cur.running)return t;
+        if(cur.remaining<=1){
+          clearInterval(timerRefs.current[idx]);
+          // Notification sonore simple
+          try{const ctx=new(window.AudioContext||window.webkitAudioContext)();const o=ctx.createOscillator();const g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);o.start();o.stop(ctx.currentTime+0.8);}catch(e){}
+          return{...t,[idx]:{...cur,remaining:0,running:false,done:true}};
+        }
+        return{...t,[idx]:{...cur,remaining:cur.remaining-1}};
+      });
+    },1000);
+  };
+  const pauseTimer=(idx)=>{
+    clearInterval(timerRefs.current[idx]);
+    setTimers(t=>({...t,[idx]:{...t[idx],running:false}}));
+  };
+  const resetTimer=(idx,seconds)=>{
+    clearInterval(timerRefs.current[idx]);
+    setTimers(t=>({...t,[idx]:{total:seconds,remaining:seconds,running:false,done:false}}));
+  };
+  const fmtTime=(s)=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+
   // ── Thème dark/light ──
   const T={
     pageBg:    darkMode?"#111113":"#f9f6f2",
@@ -909,12 +955,52 @@ export default function FitWomenApp(){
       {activeTab==="etapes"&&<div>
         <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,marginBottom:6}}>Préparation</div>
         <p style={{fontSize:11,color:"#bbb",marginBottom:18,lineHeight:1.55}}>{selected.desc}</p>
-        {(selected.steps||[]).map((step,i)=>(
-          <div key={i} style={{display:"flex",gap:11,marginBottom:13}}>
-            <div style={{width:25,height:25,borderRadius:"50%",background:DARK,color:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontWeight:700,flexShrink:0,marginTop:2}}>{i+1}</div>
-            <div style={{background:"#faf7f4",borderRadius:12,padding:"10px 13px",flex:1,fontSize:12,color:"#444",lineHeight:1.6}}>{step}</div>
-          </div>
-        ))}
+        {(selected.steps||[]).map((step,i)=>{
+          const dur=parseStepDuration(step);
+          const timer=timers[i];
+          const isDone=timer?.done;
+          const isRunning=timer?.running;
+          const rem=timer?.remaining??dur;
+          const pct=dur&&timer?Math.round((1-timer.remaining/timer.total)*100):0;
+          return(
+            <div key={i} style={{display:"flex",gap:11,marginBottom:13}}>
+              <div style={{width:25,height:25,borderRadius:"50%",background:isDone?"#6b9e72":DARK,color:isDone?"#fff":ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontWeight:700,flexShrink:0,marginTop:2,transition:"background 0.3s"}}>
+                {isDone?"✓":i+1}
+              </div>
+              <div style={{background:T.cardAlt,borderRadius:12,padding:"10px 13px",flex:1,border:`1px solid ${isDone?"#6b9e7244":T.borderL}`}}>
+                <div style={{fontSize:12,color:T.text,lineHeight:1.6,marginBottom:dur?8:0}}>{step}</div>
+                {dur&&(
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    {/* Barre de progression */}
+                    {timer&&<div style={{flex:1,minWidth:60,height:3,background:T.border,borderRadius:99,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${pct}%`,background:isDone?"#6b9e72":ROSE,borderRadius:99,transition:"width 1s linear"}}/>
+                    </div>}
+                    {/* Affichage temps */}
+                    <span style={{fontSize:11,fontWeight:800,color:isDone?"#6b9e72":isRunning?ROSE:T.textM,fontFamily:"'Cormorant Garamond',serif",minWidth:32}}>
+                      {timer?fmtTime(rem):fmtTime(dur)}
+                    </span>
+                    {/* Boutons */}
+                    {!timer&&<button onClick={()=>startTimer(i,dur)}
+                      style={{padding:"3px 10px",background:ROSE,border:"none",borderRadius:99,color:"#fff",fontSize:10,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+                      ⏱ Lancer
+                    </button>}
+                    {timer&&!isDone&&<>
+                      <button onClick={()=>isRunning?pauseTimer(i):startTimer(i,timer.remaining)}
+                        style={{width:26,height:26,borderRadius:"50%",background:isRunning?T.cardAlt:ROSE,border:`1px solid ${isRunning?T.border:ROSE}`,color:isRunning?T.textM:"#fff",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        {isRunning?"⏸":"▶"}
+                      </button>
+                      <button onClick={()=>resetTimer(i,dur)}
+                        style={{width:26,height:26,borderRadius:"50%",background:"transparent",border:`1px solid ${T.border}`,color:T.textM,cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        ↺
+                      </button>
+                    </>}
+                    {isDone&&<span style={{fontSize:10,color:"#6b9e72",fontWeight:700}}>✓ Terminé !</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
         <div style={{marginTop:16,background:T.cardAlt,borderRadius:13,padding:"13px 15px",border:`1px solid ${ROSE}22`}}>
           <div style={{fontSize:10,fontWeight:700,color:ROSE,marginBottom:4}}>💡 Conseil</div>
           <div style={{fontSize:11,color:"#aaa",lineHeight:1.6}}>{selected.goal==="seche"?"Peser les ingrédients pour rester dans ton déficit. Chaque gramme compte !":selected.goal==="muscle"?"Ne pas rogner sur les portions — le surplus est indispensable.":"Écoute tes sensations de faim et satiété."}</div>
@@ -1637,40 +1723,116 @@ export default function FitWomenApp(){
                   ))}
                 </div>
               </div>
+              {/* Indicateur étapes step 0 */}
+              <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:16}}>
+                {[0,1].map(s=><div key={s} style={{width:s===0?24:8,height:8,borderRadius:99,background:s===0?ROSE:"#e8e2db",transition:"all 0.3s"}}/>)}
+              </div>
               <button onClick={()=>setObStep(1)}
                 style={{width:"100%",padding:"14px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:14,fontWeight:700,cursor:"pointer"}}>
                 Continuer →
               </button>
             </>}
-            {obStep===1&&<>
-              <div style={{marginBottom:20}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Objectif calorique journalier</div>
-                <div style={{fontSize:11,color:"#bbb",marginBottom:14,lineHeight:1.6}}>
-                  {obGoal==="seche"?"En sèche, un déficit de 300-500 kcal est recommandé.":obGoal==="muscle"?"En prise de masse, un surplus de 200-400 kcal est idéal.":"En maintien, vise ton métabolisme total estimé."}
+            {obStep===1&&(()=>{
+              const tdeeResult=computeTDEE(obAge,obWeight,obHeight,obActivity,obGoal);
+              return(<>
+                {/* ── Indicateur étapes ── */}
+                <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:20}}>
+                  {[0,1].map(s=><div key={s} style={{width:s===1?24:8,height:8,borderRadius:99,background:s<=1?ROSE:"#e8e2db",transition:"all 0.3s"}}/>)}
                 </div>
-                {/* Suggestions rapides */}
-                <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:14}}>
-                  {(obGoal==="seche"?[1400,1600,1800]:obGoal==="muscle"?[2000,2200,2500]:[1700,2000,2300]).map(v=>(
-                    <button key={v} onClick={()=>setObCal(v)}
-                      style={{padding:"7px 14px",border:`1.5px solid ${obCal===v?ROSE:"#e8e2db"}`,borderRadius:99,background:obCal===v?ROSE_L:"#fff",color:obCal===v?"#8a6040":"#bbb",fontSize:12,fontWeight:700,cursor:"pointer"}}>
-                      {v} kcal
+                <div style={{fontSize:13,fontWeight:700,color:DARK,marginBottom:14,fontFamily:"'Cormorant Garamond',serif"}}>Ton objectif calorique 🎯</div>
+
+                {/* ── Toggle TDEE / Manuel ── */}
+                <div style={{display:"flex",background:"#f5f0ea",borderRadius:12,padding:3,marginBottom:16,gap:3}}>
+                  {[["tdee","🧮 Calculer mon TDEE"],["manual","✏️ Je connais mon objectif"]].map(([m,lbl])=>(
+                    <button key={m} onClick={()=>setObCalMode(m)}
+                      style={{flex:1,padding:"8px 6px",border:"none",borderRadius:10,background:obCalMode===m?"#fff":"transparent",
+                        color:obCalMode===m?DARK:"#aaa",fontSize:10,fontWeight:700,cursor:"pointer",
+                        boxShadow:obCalMode===m?"0 1px 6px rgba(0,0,0,0.08)":"none",transition:"all 0.18s"}}>
+                      {lbl}
                     </button>
                   ))}
                 </div>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
+
+                {obCalMode==="tdee"&&<>
+                  {/* Champs morpho */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                    {[["Âge","ans",obAge,setObAge,16,80],["Poids","kg",obWeight,setObWeight,30,150],["Taille","cm",obHeight,setObHeight,140,210]].map(([lbl,unit,val,setter,mn,mx])=>(
+                      <div key={lbl} style={{background:"#f5f0ea",borderRadius:12,padding:"10px 8px",textAlign:"center"}}>
+                        <div style={{fontSize:9,fontWeight:700,color:"#aaa",textTransform:"uppercase",marginBottom:5}}>{lbl}</div>
+                        <input type="number" value={val||""} placeholder="—" min={mn} max={mx}
+                          onChange={e=>setter(+e.target.value)}
+                          style={{width:"100%",border:"none",background:"transparent",fontSize:18,fontWeight:800,color:DARK,textAlign:"center",outline:"none",fontFamily:"'Cormorant Garamond',serif"}}/>
+                        <div style={{fontSize:9,color:"#aaa",marginTop:2}}>{unit}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Niveau d'activité */}
+                  <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:12}}>
+                    {Object.entries(ACTIVITY_LEVELS).map(([k,v])=>(
+                      <button key={k} onClick={()=>setObActivity(k)}
+                        style={{padding:"8px 12px",border:`1.5px solid ${obActivity===k?ROSE:"#e8e2db"}`,borderRadius:10,
+                          background:obActivity===k?ROSE_L:"#fff",cursor:"pointer",textAlign:"left",
+                          display:"flex",justifyContent:"space-between",alignItems:"center",transition:"all 0.15s"}}>
+                        <div>
+                          <span style={{fontSize:12,fontWeight:700,color:obActivity===k?"#8a6040":DARK}}>{v.label}</span>
+                          <span style={{fontSize:10,color:"#bbb",marginLeft:7}}>{v.sub}</span>
+                        </div>
+                        {obActivity===k&&<span style={{color:ROSE,fontWeight:800}}>✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Résultat TDEE */}
+                  {tdeeResult?(
+                    <div style={{background:`linear-gradient(135deg,${ROSE}18,${ROSE}08)`,border:`1.5px solid ${ROSE}44`,borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <div style={{fontSize:10,fontWeight:700,color:ROSE,textTransform:"uppercase",letterSpacing:"0.08em"}}>Estimation TDEE</div>
+                        <div style={{fontSize:9,color:"#aaa",marginTop:2}}>{obGoal==="seche"?"Déficit −400 kcal appliqué":obGoal==="muscle"?"Surplus +250 kcal appliqué":"Maintien"}</div>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:ROSE}}>{tdeeResult}</div>
+                        <button onClick={()=>setObCal(tdeeResult)}
+                          style={{background:ROSE,border:"none",borderRadius:9,color:"#fff",padding:"6px 12px",cursor:"pointer",fontSize:11,fontWeight:700,boxShadow:`0 2px 10px ${ROSE}44`}}>
+                          Utiliser
+                        </button>
+                      </div>
+                    </div>
+                  ):(
+                    <div style={{background:"#f5f0ea",borderRadius:12,padding:"10px 14px",marginBottom:14,textAlign:"center"}}>
+                      <div style={{fontSize:11,color:"#bbb"}}>Remplis âge, poids et taille pour obtenir ton estimation</div>
+                    </div>
+                  )}
+                </>}
+
+                {obCalMode==="manual"&&<>
+                  <div style={{fontSize:11,color:"#bbb",marginBottom:12,lineHeight:1.6}}>
+                    {obGoal==="seche"?"En sèche, un déficit de 300-500 kcal est recommandé.":obGoal==="muscle"?"En prise de masse, un surplus de 200-400 kcal est idéal.":"En maintien, vise ton métabolisme total estimé."}
+                  </div>
+                  <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:12}}>
+                    {(obGoal==="seche"?[1400,1600,1800]:obGoal==="muscle"?[2000,2200,2500]:[1700,2000,2300]).map(v=>(
+                      <button key={v} onClick={()=>setObCal(v)}
+                        style={{padding:"7px 14px",border:`1.5px solid ${obCal===v?ROSE:"#e8e2db"}`,borderRadius:99,background:obCal===v?ROSE_L:"#fff",color:obCal===v?"#8a6040":"#bbb",fontSize:12,fontWeight:700,cursor:"pointer"}}>
+                        {v} kcal
+                      </button>
+                    ))}
+                  </div>
+                </>}
+
+                {/* Champ calorique final (toujours visible) */}
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:18}}>
                   <input type="number" value={obCal} min={1000} max={4000} step={50} onChange={e=>setObCal(+e.target.value)}
-                    style={{flex:1,padding:"11px 14px",border:"1.5px solid #e8e2db",borderRadius:12,fontSize:16,fontWeight:700,color:DARK,textAlign:"center",outline:"none",fontFamily:"'Cormorant Garamond',serif"}}/>
+                    style={{flex:1,padding:"12px 14px",border:`2px solid ${ROSE}55`,borderRadius:12,fontSize:18,fontWeight:800,color:DARK,textAlign:"center",outline:"none",fontFamily:"'Cormorant Garamond',serif",background:ROSE_L}}/>
                   <span style={{fontSize:12,color:"#aaa",fontWeight:600,flexShrink:0}}>kcal / jour</span>
                 </div>
-              </div>
-              <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>setObStep(0)} style={{flex:"0 0 auto",padding:"13px 18px",background:"#f5f0ea",color:"#aaa",border:"none",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>← Retour</button>
-                <button onClick={finishOnboarding}
-                  style={{flex:1,padding:"13px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                  C'est parti ! 🚀
-                </button>
-              </div>
-            </>}
+
+                <div style={{display:"flex",gap:10}}>
+                  <button onClick={()=>setObStep(0)} style={{flex:"0 0 auto",padding:"13px 18px",background:"#f5f0ea",color:"#aaa",border:"none",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>← Retour</button>
+                  <button onClick={finishOnboarding}
+                    style={{flex:1,padding:"13px",background:DARK,color:"#fff",border:"none",borderRadius:14,fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 4px 16px rgba(0,0,0,0.2)`}}>
+                    C'est parti ! 🚀
+                  </button>
+                </div>
+              </>);
+            })()}
           </div>
         </div>
       )}
