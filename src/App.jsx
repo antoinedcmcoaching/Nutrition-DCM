@@ -451,6 +451,17 @@ const GOALS={
   maintien:{label:"Maintien",      emoji:"⚖️",color:"#9a7b5e",desc:"Macros équilibrés · Énergie stable"},
   muscle:  {label:"Prise de masse",emoji:"💪",color:"#6b8f72",desc:"Surplus calorique · Masse propre"},
 };
+
+// ─── MESSAGES DU JOUR ─────────────────────────────────────────────────────────
+const DAILY_MESSAGES=[
+  "La régularité bat toujours l'intensité. Une séance imparfaite vaut mieux qu'une séance parfaite jamais faite. 🔥",
+  "Chaque repas est une opportunité de nourrir ton objectif. Fais des choix qui te rapprochent de là où tu veux être. 🎯",
+  "Ton corps s'adapte à ce que tu lui donnes. Donne-lui de la cohérence, il te donnera des résultats. 💎",
+  "L'énergie que tu mets dans ton assiette aujourd'hui se transforme en performance demain. Choisis bien. ⚡",
+  "Ne cherche pas la perfection, cherche la progression. Chaque petit pas compte. 🚀",
+  "Hydrate-toi, mange coloré, bouge ton corps. C'est aussi simple que ça — et aussi puissant. 🌿",
+  "Les résultats ne se voient pas au jour le jour, mais au fil des semaines. Continue. 📈",
+];
 const MEALS=["Tous","Petit-déjeuner","Déjeuner","Dîner","Collation"];
 const ROSE="#c9a882",ROSE_L="#f5ede3",DARK="#1a1a1a";
 
@@ -1145,6 +1156,21 @@ export default function FitWomenApp(){
       </div>
 
       <div style={{maxWidth:1300,margin:"0 auto",padding:"0 14px"}}>
+        {/* ── MESSAGE DU JOUR ── */}
+        {(()=>{
+          const msg=DAILY_MESSAGES[Math.floor(Date.now()/86400000)%DAILY_MESSAGES.length];
+          return(
+            <div style={{background:darkMode?"rgba(201,168,130,0.08)":"rgba(201,168,130,0.12)",border:`1px solid ${ROSE}33`,borderRadius:14,padding:"12px 16px",margin:"12px 0 4px",display:"flex",gap:10,alignItems:"flex-start"}}>
+              <span style={{fontSize:16,flexShrink:0,marginTop:1}}>💬</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:ROSE,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Message du jour</div>
+                <div style={{fontSize:12,color:T.text,lineHeight:1.55,fontStyle:"italic"}}>{msg}</div>
+                <div style={{fontSize:10,color:T.textM,marginTop:4,textAlign:"right",fontWeight:600}}>— Antoine</div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── GOAL TABS ── */}
         <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
@@ -1707,7 +1733,7 @@ export default function FitWomenApp(){
             </div>
             <div style={{textAlign:"center",marginBottom:24}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:DARK,marginBottom:4}}>Bienvenue ✨</div>
-              <div style={{fontSize:12,color:"#bbb",lineHeight:1.6}}>Personnalise ton expérience nutrition<br/>en quelques secondes</div>
+              <div style={{fontSize:12,color:"#888",lineHeight:1.65,maxWidth:300,margin:"0 auto"}}>Bienvenue sur l'app nutrition officielle de Coach Antoine. Elle te permet de découvrir des recettes adaptées à ton objectif, planifier tes repas, suivre tes apports et progresser à ton rythme — conçue pour les femmes actives. 💪</div>
             </div>
             {obStep===0&&<>
               <div style={{marginBottom:18}}>
@@ -1955,7 +1981,11 @@ export default function FitWomenApp(){
       {showCoaching&&(
         <div style={{position:"fixed",inset:0,zIndex:300,background:T.pageBg,overflowY:"auto",paddingBottom:80}}>
           <div style={{background:DARK,padding:"16px 20px",position:"sticky",top:0,zIndex:10,backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"0.08em"}}>Mon Coach 🏋️</div>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <button onClick={()=>setShowCoaching(false)}
+                style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,width:34,height:34,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0}}>‹</button>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"0.08em"}}>Mon Coach 🏋️</div>
+            </div>
           </div>
           <div style={{maxWidth:480,margin:"0 auto",padding:"20px 18px"}}>
             <div style={{background:`linear-gradient(135deg,#1a0e06,${DARK})`,borderRadius:20,padding:"24px 20px",marginBottom:20,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
@@ -1976,9 +2006,8 @@ export default function FitWomenApp(){
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:16}}>
               {[
-                {emoji:"📸", label:"Instagram", sub:"@antoinedcm", color:"#E1306C", href:"https://instagram.com/antoinedcm"},
-                {emoji:"💼", label:"Mon programme complet", sub:"Coaching personnalisé", color:ROSE, href:"https://instagram.com/antoinedcm"},
-                {emoji:"📩", label:"Me contacter", sub:"Questions & inscriptions", color:"#4fc3f7", href:"mailto:contact@antoinedcm.fr"},
+                {emoji:"📸", label:"Instagram", sub:"@antoiinedacosta", color:"#E1306C", href:"https://www.instagram.com/antoiinedacosta/"},
+                {emoji:"📩", label:"Me contacter", sub:"contact@antoinecoaching.com", color:"#4fc3f7", href:"mailto:contact@antoinecoaching.com"},
               ].map((item)=>(
                 <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
                   style={{display:"flex",alignItems:"center",gap:14,background:T.card,borderRadius:14,padding:"14px 16px",textDecoration:"none",border:`1px solid ${item.color}33`}}>
