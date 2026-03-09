@@ -1151,6 +1151,11 @@ export default function FitWomenApp(){
               style={{background:"rgba(255,255,255,0.08)",border:`1.5px solid ${ROSE}66`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               👤
             </button>
+            {/* Coaching - masqué mobile (bottom nav) */}
+            <button onClick={()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(true);}} title="Mon Coach" className="header-icon-hide"
+              style={{background:showCoaching?ROSE+"33":"rgba(255,255,255,0.08)",border:`1.5px solid ${showCoaching?ROSE:ROSE+"44"}`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              🏋️
+            </button>
           </div>
         </div>
       </div>
@@ -1733,7 +1738,7 @@ export default function FitWomenApp(){
             </div>
             <div style={{textAlign:"center",marginBottom:24}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:DARK,marginBottom:4}}>Bienvenue ✨</div>
-              <div style={{fontSize:12,color:"#888",lineHeight:1.65,maxWidth:300,margin:"0 auto"}}>Bienvenue sur l'app nutrition officielle de Coach Antoine. Elle te permet de découvrir des recettes adaptées à ton objectif, planifier tes repas, suivre tes apports et progresser à ton rythme — conçue pour les femmes actives. 💪</div>
+              <div style={{fontSize:12,color:"#888",lineHeight:1.6,maxWidth:300,margin:"0 auto"}}>Recettes sèche · maintien · prise de masse, planification hebdo et suivi calorique — tout ce qu'il faut pour atteindre ton objectif. 🎯</div>
             </div>
             {obStep===0&&<>
               <div style={{marginBottom:18}}>
