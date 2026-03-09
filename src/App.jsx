@@ -1111,7 +1111,7 @@ export default function FitWomenApp(){
             <div style={{minWidth:0}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"0.12em",textTransform:"uppercase",lineHeight:1}}>Fitwomen</div>
               {profile.name
-                ? <div style={{fontSize:11,color:ROSE,letterSpacing:"0.04em",marginTop:3,fontWeight:600}}>Bonjour {profile.name} 👋</div>
+                ? <div style={{fontSize:11,color:ROSE,letterSpacing:"0.04em",marginTop:2,fontWeight:600,lineHeight:1.2}}>Bonjour {profile.name} 👋 <span style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontWeight:500,letterSpacing:"0.1em",textTransform:"uppercase",marginLeft:6}}>by Coach Antoine</span></div>
                 : <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.14em",marginTop:2,textTransform:"uppercase"}}>by Coach Antoine</div>
               }
             </div>
@@ -1177,7 +1177,7 @@ export default function FitWomenApp(){
         })()}
 
         {/* ── GOAL TABS ── */}
-        <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
+        <div style={{display:"flex",gap:10,padding:"14px 0 0"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
             <button key={key} onClick={()=>{
                 const order=["seche","maintien","muscle"];
@@ -1193,24 +1193,54 @@ export default function FitWomenApp(){
                 setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");
               }}
               style={{
-                flex:1,padding:"12px 6px",
-                border:"none",
-                borderRadius:20,
-                background:activeGoal===key?DARK:cfg.color+"12",
-                color:activeGoal===key?"#fff":cfg.color,
-                fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,
+                flex:1,
+                padding:"16px 8px 14px",
+                border:`2px solid ${activeGoal===key?cfg.color:cfg.color+"28"}`,
+                borderRadius:18,
+                background:activeGoal===key
+                  ?`linear-gradient(135deg,${cfg.color}22,${cfg.color}10)`
+                  :darkMode?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.7)",
+                color:activeGoal===key?cfg.color:T.textM,
+                fontFamily:"'Jost',sans-serif",fontWeight:600,
                 cursor:"pointer",
                 transition:"all 0.22s",
                 textAlign:"center",
-                boxShadow:activeGoal===key
-                  ?`0 4px 18px ${cfg.color}44, inset 0 1px 0 rgba(255,255,255,0.08)`
-                  :"0 1px 4px rgba(0,0,0,0.06)",
+                boxShadow:activeGoal===key?`0 6px 24px ${cfg.color}30`:"none",
+                position:"relative",
+                overflow:"hidden",
               }}>
-              <div style={{fontSize:22,marginBottom:3}}>{cfg.emoji}</div>
-              <div style={{textTransform:"uppercase",fontWeight:800,fontSize:9,letterSpacing:"0.08em"}}>{cfg.label}</div>
-              {activeGoal===key&&<div style={{width:18,height:2,borderRadius:99,background:cfg.color,margin:"5px auto 0"}}/>}
+              {activeGoal===key&&<div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${cfg.color}00,${cfg.color},${cfg.color}00)`,borderRadius:"18px 18px 0 0"}}/>}
+              <div style={{fontSize:26,marginBottom:6,lineHeight:1}}>{cfg.emoji}</div>
+              <div style={{fontWeight:800,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:3}}>{cfg.label}</div>
+              <div style={{fontSize:9,color:activeGoal===key?cfg.color+"bb":T.textM,lineHeight:1.3,opacity:0.8}}>{cfg.desc}</div>
             </button>
           ))}
+        </div>
+
+        {/* ── MINI SEMAINIER ── */}
+        <div style={{background:T.card,border:`1px solid ${T.border}`,borderRadius:16,padding:"12px 14px",margin:"12px 0 4px",cursor:"pointer"}} onClick={()=>setShowWeek(true)}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+            <div style={{fontSize:11,fontWeight:700,color:T.text}}>📆 Semainier de la semaine</div>
+            <div style={{fontSize:10,color:ROSE,fontWeight:700}}>Voir tout →</div>
+          </div>
+          <div style={{display:"flex",gap:4}}>
+            {DAYS.map((d,i)=>{
+              const tot=weekDayTotal(d);
+              const target=profile.calTarget||1600;
+              const pct=Math.min(100,Math.round(tot/target*100));
+              const isToday=i===(new Date().getDay()===0?6:new Date().getDay()-1);
+              const cfg2=GOALS[activeGoal];
+              return(
+                <div key={d} style={{flex:1,textAlign:"center"}}>
+                  <div style={{fontSize:8,fontWeight:isToday?800:500,color:isToday?ROSE:T.textM,marginBottom:3,letterSpacing:"0.04em"}}>{d}</div>
+                  <div style={{height:28,background:T.cardAlt,borderRadius:6,position:"relative",overflow:"hidden",border:isToday?`1px solid ${ROSE}44`:"1px solid transparent"}}>
+                    {tot>0&&<div style={{position:"absolute",bottom:0,left:0,right:0,height:`${pct}%`,background:pct>=100?`${cfg2?.color}cc`:`${cfg2?.color}88`,borderRadius:4,transition:"height 0.3s ease"}}/>}
+                  </div>
+                  <div style={{fontSize:7,color:tot>0?T.text:T.textM,marginTop:3,fontWeight:tot>0?700:400}}>{tot>0?tot+"":"-"}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* ── FILTRES ── */}
