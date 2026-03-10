@@ -1134,7 +1134,15 @@ export default function FitWomenApp(){
         @keyframes slideFromLeft{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
         @keyframes fadeInScale{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
         @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,130,0.5)}50%{box-shadow:0 0 0 8px rgba(201,168,130,0)}}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.85)}}
+        @keyframes goalShine{0%{left:-120%}100%{left:130%}}
+        @keyframes emojiPop{0%{transform:scale(1) rotate(0)}30%{transform:scale(1.4) rotate(-12deg)}65%{transform:scale(0.9) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+        @keyframes goalGlowSeche{0%,100%{box-shadow:0 6px 22px rgba(181,97,110,0.45),0 2px 8px rgba(181,97,110,0.2),inset 0 1px 0 rgba(255,255,255,0.2)}50%{box-shadow:0 10px 32px rgba(181,97,110,0.65),0 4px 14px rgba(181,97,110,0.3),inset 0 1px 0 rgba(255,255,255,0.28)}}
+        @keyframes goalGlowMaintien{0%,100%{box-shadow:0 6px 22px rgba(154,123,94,0.45),0 2px 8px rgba(154,123,94,0.2),inset 0 1px 0 rgba(255,255,255,0.2)}50%{box-shadow:0 10px 32px rgba(154,123,94,0.65),0 4px 14px rgba(154,123,94,0.3),inset 0 1px 0 rgba(255,255,255,0.28)}}
+        @keyframes goalGlowMuscle{0%,100%{box-shadow:0 6px 22px rgba(107,143,114,0.45),0 2px 8px rgba(107,143,114,0.2),inset 0 1px 0 rgba(255,255,255,0.2)}50%{box-shadow:0 10px 32px rgba(107,143,114,0.65),0 4px 14px rgba(107,143,114,0.3),inset 0 1px 0 rgba(255,255,255,0.28)}}
+        @keyframes dotBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+        .goal-btn{transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1)!important}
+        .goal-btn:hover:not(.active){transform:translateY(-2px) scale(1.02)!important;filter:brightness(1.05)}
         @media(max-width:400px){.budget-label{display:none!important}.budget-bar-wrap{width:48px!important}}
         @media(max-width:767px){.header-icon-hide{display:none!important}.budget-goal-hide{display:none!important}.budget-btn-mobile{padding:6px 8px!important}.budget-bar-wrap{width:54px!important}}
         button{-webkit-tap-highlight-color:transparent}
@@ -1347,9 +1355,13 @@ export default function FitWomenApp(){
 
         {recipeMode==="generator"&&<>
         {/* ── GOAL TABS ── */}
-        <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
-          {Object.entries(GOALS).map(([key,cfg])=>(
-            <button key={key} onClick={()=>{
+        <div style={{display:"flex",gap:10,padding:"14px 0 10px"}}> 
+          {Object.entries(GOALS).map(([key,cfg])=>{
+            const isActive=activeGoal===key;
+            const glowAnims={seche:"goalGlowSeche 2.8s ease-in-out infinite",maintien:"goalGlowMaintien 2.8s ease-in-out infinite",muscle:"goalGlowMuscle 2.8s ease-in-out infinite"};
+            const gradients={seche:"linear-gradient(145deg,#c4606f 0%,#a84858 60%,#8b3545 100%)",maintien:"linear-gradient(145deg,#b8936a 0%,#9a7b5e 60%,#7d6045 100%)",muscle:"linear-gradient(145deg,#7aa882 0%,#5a8f65 60%,#3f7348 100%)"};
+            return(
+            <button key={key} className={"goal-btn"+(isActive?" active":"")} onClick={()=>{
                 const order=["seche","maintien","muscle"];
                 const prev=prevGoalRef.current;
                 const fromIdx=order.indexOf(prev);
@@ -1363,24 +1375,34 @@ export default function FitWomenApp(){
                 setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");
               }}
               style={{
-                flex:1,padding:"12px 6px",
-                border:"none",
-                borderRadius:20,
-                background:activeGoal===key?cfg.color:cfg.color+"18",
-                color:activeGoal===key?"#fff":cfg.color,
-                fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,
+                flex:1,padding:"18px 6px 14px",
+                border:isActive?"none":`1.5px solid ${cfg.color}30`,
+                borderRadius:22,
+                background:isActive?gradients[key]:darkMode?`${cfg.color}14`:`${cfg.color}10`,
+                color:isActive?"#fff":cfg.color,
+                fontFamily:"'Jost',sans-serif",
                 cursor:"pointer",
-                transition:"all 0.22s",
                 textAlign:"center",
-                boxShadow:activeGoal===key
-                  ?`0 4px 18px ${cfg.color}55, inset 0 1px 0 rgba(255,255,255,0.15)`
-                  :"0 1px 4px rgba(0,0,0,0.06)",
+                position:"relative",
+                overflow:"hidden",
+                transform:isActive?"translateY(-3px) scale(1.05)":"translateY(0) scale(1)",
+                boxShadow:isActive?"none":"0 1px 5px rgba(0,0,0,0.07)",
+                animation:isActive?glowAnims[key]:"none",
               }}>
-              <div style={{fontSize:22,marginBottom:3}}>{cfg.emoji}</div>
-              <div style={{textTransform:"uppercase",fontWeight:800,fontSize:9,letterSpacing:"0.08em"}}>{cfg.label}</div>
-              {activeGoal===key&&<div style={{width:18,height:2,borderRadius:99,background:cfg.color,margin:"5px auto 0"}}/>}
+              {isActive&&<div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.28),transparent)",animation:"goalShine 2.2s ease-in-out 0.5s infinite",pointerEvents:"none"}}/>}
+              {isActive&&<div style={{position:"absolute",top:0,left:"22%",right:"22%",height:2.5,borderRadius:99,background:"rgba(255,255,255,0.65)",boxShadow:"0 0 7px rgba(255,255,255,0.9)"}}/>}
+              {isActive&&<div style={{position:"absolute",bottom:0,left:0,right:0,height:"35%",background:"linear-gradient(to top,rgba(0,0,0,0.12),transparent)",pointerEvents:"none"}}/>}
+              <div style={{fontSize:28,marginBottom:5,display:"block",filter:isActive?"drop-shadow(0 3px 8px rgba(0,0,0,0.35))":"none",animation:isActive?"emojiPop 0.45s cubic-bezier(0.34,1.56,0.64,1)":"none",transformOrigin:"center"}}>{cfg.emoji}</div>
+              <div style={{textTransform:"uppercase",fontWeight:900,fontSize:9,letterSpacing:"0.12em",textShadow:isActive?"0 1px 4px rgba(0,0,0,0.35)":"none",marginBottom:7}}>{cfg.label}</div>
+              {isActive
+                ?<div style={{display:"flex",gap:3,justifyContent:"center",alignItems:"center"}}>
+                   {[0,1,2].map(i=><div key={i} style={{width:i===1?6:4,height:i===1?6:4,borderRadius:"50%",background:"rgba(255,255,255,0.85)",animation:`dotBounce 1.2s ease-in-out ${i*0.15}s infinite`,boxShadow:"0 0 5px rgba(255,255,255,0.7)"}}/>)}
+                 </div>
+                :<div style={{width:16,height:2,borderRadius:99,background:`${cfg.color}40`,margin:"0 auto"}}/>
+              }
             </button>
-          ))}
+            );
+          })}
         </div>
 
         {/* ── FILTRES ── */}
