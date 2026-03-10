@@ -560,6 +560,46 @@ const getTags=(r)=>{
 };
 const ALL_TAGS=["💪 Haute protéine","⚡ Léger","🕐 Rapide","🌱 Végétarien"];
 
+// ─── RECETTES COACH ───────────────────────────────────────────────────────────
+const COACH_RECIPES=[
+  {id:"cr1",cat:"Plat",emoji:"🍚",name:"Risotto crevettes au lait de coco",desc:"Un risotto crémeux aux saveurs exotiques, finalé au jus de citron vert et zeste.",basePortions:4,kcalPer:520,macros:{p:24,c:62,f:14},
+   ingredients:[{q:300,u:"g",n:"Riz à risotto (Arborio ou Carnaroli)"},{q:250,u:"g",n:"Crevettes décortiquées cuites"},{q:200,u:"mL",n:"Lait de coco"},{q:2,u:"",n:"Courgettes"},{q:2,u:"",n:"Citrons verts"},{q:2,u:"L",n:"Bouillon de légumes maison"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"pincée",n:"Sel & poivre"}],
+   steps:["Préparez le bouillon : faites mijoter carottes, navet, céleri, oignons et laurier 45 min. Filtrez.","Faites revenir le riz dans l'huile d'olive jusqu'à ce qu'il soit nacré.","Ajoutez le bouillon louche par louche (16 min). Remplacez les 2 dernières louches par le lait de coco.","Ajoutez les courgettes en dés et les crevettes, cuisez 2 min.","Terminez avec le jus et le zeste d'un citron vert. Ajustez selon le goût."]},
+  {id:"cr2",cat:"Dessert",emoji:"🍫",name:"Stracciatella maison",desc:"Un dessert léger et onctueux — fromage blanc, blancs d'œufs montés et copeaux de chocolat noir.",basePortions:4,kcalPer:170,macros:{p:14,c:15,f:6},
+   ingredients:[{q:300,u:"g",n:"Fromage blanc 3% MG"},{q:3,u:"",n:"Blancs d'œufs"},{q:80,u:"g",n:"Chocolat noir en tablette"},{q:40,u:"g",n:"Sucre"},{q:1,u:"c.c.",n:"Vanille en poudre"}],
+   steps:["Fouettez les blancs d'œufs avec le sucre et la vanille jusqu'à obtenir une meringue ferme.","Râpez ou coupez finement le chocolat en copeaux.","Incorporez délicatement les copeaux de chocolat et le fromage blanc.","Réservez au frais 1 à 2h avant de déguster."]},
+  {id:"cr3",cat:"Entrée",emoji:"🥗",name:"Coleslaw maison aux raisins secs",desc:"Un coleslaw frais et croquant, sauce fromage blanc citronnée et raisins secs pour la douceur.",basePortions:4,kcalPer:130,macros:{p:6,c:18,f:4},
+   ingredients:[{q:250,u:"g",n:"Carottes"},{q:200,u:"g",n:"Chou blanc"},{q:40,u:"g",n:"Raisins secs"},{q:150,u:"g",n:"Fromage blanc nature"},{q:1,u:"c.s.",n:"Jus de citron"},{q:1,u:"c.s.",n:"Huile d'olive"},{q:1,u:"c.s.",n:"Vinaigre de cidre"},{q:1.5,u:"c.c.",n:"Moutarde"},{q:1,u:"pincée",n:"Sel & poivre"}],
+   steps:["Lavez, épluchez et râpez les carottes et le chou. Placez dans un saladier.","Mélangez tous les ingrédients de la sauce (fromage blanc, citron, huile, vinaigre, moutarde, sel, poivre).","Ajoutez les raisins secs et la sauce sur les légumes. Mélangez bien."]},
+  {id:"cr4",cat:"Plat",emoji:"🍝",name:"Tagliatelles complètes poisson-épinard",desc:"Des pâtes complètes nappées d'une sauce crémeuse saumon-épinards et parmesan.",basePortions:4,kcalPer:580,macros:{p:32,c:68,f:16},
+   ingredients:[{q:400,u:"g",n:"Pâtes tagliatelles complètes"},{q:200,u:"g",n:"Pavé de saumon ou truite"},{q:200,u:"g",n:"Épinards frais ou surgelés"},{q:200,u:"g",n:"Fromage blanc 3% MG"},{q:100,u:"g",n:"Parmesan râpé"},{q:1,u:"",n:"Oignon"},{q:2,u:"",n:"Gousses d'ail"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"pincée",n:"Poivre & zeste citron (optionnel)"}],
+   steps:["Faites cuire les pâtes al dente dans une grande casserole d'eau salée. Réservez une tasse d'eau de cuisson.","Faites revenir l'oignon et l'ail émincés dans l'huile d'olive.","Ajoutez les épinards, puis le saumon en morceaux. Cuisez 2-3 min.","Incorporez le fromage blanc. Ajoutez les pâtes et mélangez (eau de cuisson si trop épais).","Finissez avec le parmesan et un zeste de citron."]},
+  {id:"cr5",cat:"Entrée",emoji:"🥗",name:"Salade à la diable",desc:"Betteraves, pommes, noix, gouda et mâche — une salade colorée avec vinaigrette à l'huile de lin.",basePortions:6,kcalPer:220,macros:{p:6,c:14,f:16},
+   ingredients:[{q:6,u:"",n:"Betteraves cuites"},{q:3,u:"",n:"Pommes"},{q:100,u:"g",n:"Noix"},{q:100,u:"g",n:"Gouda"},{q:150,u:"g",n:"Mâche"},{q:1,u:"",n:"Oignon rouge (facultatif)"},{q:3,u:"c.s.",n:"Huile de lin, colza ou cameline"},{q:1.5,u:"c.s.",n:"Vinaigre de cidre"},{q:1,u:"pincée",n:"Sel & poivre"}],
+   steps:["Coupez les betteraves en dés, les pommes et le fromage en morceaux.","Émincez finement l'oignon. Hachez grossièrement les noix.","Mélangez tous les ingrédients dans un saladier avec la mâche.","Préparez la vinaigrette (huile, vinaigre, sel, poivre). Arrosez et servez."]},
+  {id:"cr6",cat:"Plat",emoji:"🌱",name:"Quinoa à la méditerranéenne",desc:"Quinoa, œufs pochés sur lit de tomates et champignons au curry, couronné de féta.",basePortions:4,kcalPer:430,macros:{p:20,c:42,f:18},
+   ingredients:[{q:200,u:"g",n:"Quinoa"},{q:4,u:"",n:"Œufs"},{q:400,u:"g",n:"Tomates pelées en boîte"},{q:200,u:"g",n:"Champignons frais"},{q:50,u:"g",n:"Féta"},{q:1,u:"",n:"Oignon"},{q:2,u:"c.c.",n:"Curry"},{q:4,u:"c.s.",n:"Huile d'olive"}],
+   steps:["Cuire le quinoa selon les indications du paquet.","Faire revenir l'oignon puis les champignons avec curry et sel.","Ajouter les tomates concassées, cuire 5 min.","Casser les œufs sur le mélange, couvrir et cuire 3-5 min selon la cuisson souhaitée.","Servir le quinoa avec le mélange légumes/œufs et la féta émiettée."]},
+  {id:"cr7",cat:"Plat",emoji:"🍗",name:"Poulet sauce butternut & riz curcuma",desc:"Escalopes de poulet nappées d'une sauce butternut onctueuse, sur riz basmati au curcuma et noix de cajou.",basePortions:6,kcalPer:490,macros:{p:38,c:52,f:14},
+   ingredients:[{q:600,u:"g",n:"Escalopes de poulet"},{q:360,u:"g",n:"Riz basmati"},{q:1,u:"",n:"Demi-butternut"},{q:1,u:"",n:"Oignon"},{q:75,u:"mL",n:"Lait demi-écrémé"},{q:2,u:"c.s.",n:"Huile de sésame"},{q:1,u:"c.c.",n:"Curcuma"},{q:1,u:"c.c.",n:"Paprika"},{q:1,u:"poignée",n:"Noix de cajou non salées"}],
+   steps:["Faites suer l'oignon dans l'huile d'olive. Ajoutez le butternut en dés et le paprika.","Couvrez d'eau (1 cm au-dessus), cuisez à feu doux 15-20 min.","Faites cuire le riz 10 min, égouttez et ajoutez le curcuma.","Saisissez le poulet en dés à la poêle.","Mixez la préparation butternut avec le lait et l'huile de sésame. Salez.","Terminez la cuisson du poulet dans la sauce. Servez sur le riz avec les noix de cajou."]},
+  {id:"cr8",cat:"Dessert",emoji:"🍎",name:"Salade de fruits à la cannelle",desc:"Raisins blonds, clémentines, banane et pommes, marinés dans un jus d'orange vanillé à la cannelle.",basePortions:6,kcalPer:140,macros:{p:1.5,c:34,f:0.4},
+   ingredients:[{q:450,u:"g",n:"Raisins blonds"},{q:5,u:"",n:"Clémentines"},{q:1,u:"",n:"Banane"},{q:2,u:"",n:"Pommes rouges"},{q:2,u:"",n:"Oranges (jus)"},{q:3,u:"c.c.",n:"Sucre cassonade"},{q:1,u:"c.c.",n:"Arôme vanille"},{q:1,u:"c.c.",n:"Cannelle (optionnel)"}],
+   steps:["Coupez les raisins en deux (ôter les pépins), pelez et coupez les clémentines, émincez la banane.","Épluchez les pommes, retirez le cœur et coupez en dés.","Versez le jus d'orange sur les fruits. Ajoutez la vanille, le sucre et la cannelle.","Mélangez bien et réservez au frais avant de déguster."]},
+  {id:"cr9",cat:"Plat",emoji:"🫘",name:"Dahl de lentilles corail",desc:"Un dahl épicé au curry, curcuma et gingembre frais, parfumé à la coriandre ou au persil.",basePortions:6,kcalPer:220,macros:{p:12,c:34,f:5},
+   ingredients:[{q:250,u:"g",n:"Lentilles corail"},{q:200,u:"g",n:"Purée de tomates"},{q:250,u:"g",n:"Eau"},{q:1,u:"",n:"Oignon"},{q:1,u:"",n:"Gousse d'ail"},{q:15,u:"g",n:"Gingembre frais"},{q:1,u:"c.s.",n:"Curry"},{q:1,u:"c.s.",n:"Curcuma"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"poignée",n:"Persil ou coriandre"}],
+   steps:["Rincez et égouttez les lentilles. Émincez l'oignon et l'ail.","Faites revenir l'ail et l'oignon dans l'huile d'olive sans colorer.","Ajoutez les lentilles, la purée de tomates, les épices et le sel. Mélangez.","Cuisez 30 min à feu moyen en remuant. Ajoutez de l'eau si les lentilles accrochent.","Servez chaud avec quelques feuilles de persil ou coriandre."]},
+  {id:"cr10",cat:"Dessert",emoji:"🍓",name:"Faisselle aux fruits frais & sésame",desc:"Faisselle crémeuse au miel, garnie de fruits de saison et de graines de sésame torréfiées.",basePortions:4,kcalPer:190,macros:{p:10,c:22,f:7},
+   ingredients:[{q:400,u:"g",n:"Faisselle 4,5% MG"},{q:400,u:"g",n:"Fruits de saison de votre choix"},{q:60,u:"g",n:"Graines de sésame"},{q:20,u:"g",n:"Miel (facultatif)"}],
+   steps:["Torréfiez le sésame à sec dans une poêle antiadhésive sur feu vif, en remuant. Réservez dans un bol.","Lavez et coupez les fruits en morceaux.","Égouttez la faisselle, mélangez avec le miel, versez en verrines.","Garnissez des fruits frais et du sésame torréfié en topping."]},
+  {id:"cr11",cat:"Plat",emoji:"🐟",name:"Taboulé de sardines aux légumes",desc:"Semoule complète gonflée à l'huile de sardines et jus de citron, avec légumes de saison et sardines.",basePortions:4,kcalPer:460,macros:{p:28,c:52,f:14},
+   ingredients:[{q:240,u:"g",n:"Semoule complète crue"},{q:3,u:"boîtes",n:"Sardines à l'huile d'olive"},{q:400,u:"g",n:"Légumes de saison"},{q:1,u:"",n:"Oignon rouge"},{q:1,u:"",n:"Boîte de maïs"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"",n:"Citron jaune (jus)"},{q:1,u:"poignée",n:"Ciboulette ou coriandre"}],
+   steps:["Faites bouillir de l'eau. Préparez et coupez les légumes en dés.","Faites revenir l'oignon et les légumes dans l'huile d'olive.","Ouvrez les sardines, réservez en conservant l'huile.","Versez la semoule dans un saladier. Ajoutez sel, huile des sardines, jus de citron et eau bouillante (couvrir entièrement). Couvrez et laissez gonfler 15 min.","Mélangez les légumes cuits à la semoule. Disposez les sardines. Ajoutez les herbes ciselées."]},
+  {id:"cr12",cat:"Dessert",emoji:"🍐",name:"Fromage blanc, poires caramélisées & flocons d'avoine",desc:"Verrines de fromage blanc sur lit de poires caramélisées au beurre et flocons d'avoine toastés.",basePortions:6,kcalPer:165,macros:{p:8,c:26,f:4},
+   ingredients:[{q:400,u:"g",n:"Fromage blanc"},{q:4,u:"",n:"Poires"},{q:80,u:"g",n:"Flocons d'avoine"},{q:20,u:"g",n:"Sucre"},{q:10,u:"g",n:"Beurre demi-sel"}],
+   steps:["Pelez et coupez les poires en dés.","Faites revenir les poires dans une poêle avec le beurre et le sucre jusqu'à dorure.","Ajoutez les flocons d'avoine. Cuisez jusqu'à caramélisation.","Versez le fromage blanc en verrines. Ajoutez le mélange poires/flocons par-dessus. Laissez refroidir."]}
+];
+
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
 export default function FitWomenApp(){
   // ── États de base ──
@@ -573,6 +613,10 @@ export default function FitWomenApp(){
   const [page,setPage]=useState(1);
   const [activeTab,setActiveTab]=useState("recette");
   const [showCoaching,setShowCoaching]=useState(false);
+  const [recipeMode,setRecipeMode]=useState("generator"); // "generator" | "coach"
+  const [coachCat,setCoachCat]=useState("Tous");
+  const [selectedCoach,setSelectedCoach]=useState(null);
+  const [coachPortions,setCoachPortions]=useState({});
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   const [isLoading,setIsLoading]=useState(false);
   const loadingTimer=useRef(null);
@@ -1092,9 +1136,7 @@ export default function FitWomenApp(){
         @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
         @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(201,168,130,0.5)}50%{box-shadow:0 0 0 8px rgba(201,168,130,0)}}
         @media(max-width:400px){.budget-label{display:none!important}.budget-bar-wrap{width:48px!important}}
-        @media(max-width:767px){.header-icon-hide{display:none!important}}
-        @media(max-width:767px){.desktop-only{display:none!important}}
-        @media(min-width:768px){.mobile-only{display:none!important}}
+        @media(max-width:767px){.header-icon-hide{display:none!important}.budget-goal-hide{display:none!important}.budget-btn-mobile{padding:6px 8px!important}.budget-bar-wrap{width:54px!important}}
         button{-webkit-tap-highlight-color:transparent}
         button:active{opacity:0.82;transform:scale(0.97)}
         .skeleton{background:linear-gradient(90deg,#f0ebe4 25%,#faf6f1 50%,#f0ebe4 75%);background-size:400px 100%;animation:shimmer 1.4s infinite linear;border-radius:10px}
@@ -1104,31 +1146,35 @@ export default function FitWomenApp(){
 
       {/* ── HEADER ── */}
       <div style={{background:DARK,padding:"14px 20px",position:"sticky",top:0,zIndex:200,boxShadow:"0 2px 24px rgba(0,0,0,0.4)",borderBottom:"1px solid rgba(255,255,255,0.06)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
-        <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}}>
+        <div style={{maxWidth:1300,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
           {/* Logo + titre */}
-          <div style={{display:"flex",alignItems:"center",gap:12,flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:12,flex:1,minWidth:0}}>
             <div style={{width:44,height:44,borderRadius:8,overflow:"hidden",flexShrink:0,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <img src="data:image/png;base64,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" alt="FitWomen" style={{width:40,height:40,objectFit:"contain"}}/>
             </div>
             <div style={{minWidth:0}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:"#fff",letterSpacing:"0.12em",textTransform:"uppercase",lineHeight:1}}>Fitwomen</div>
               {profile.name
-                ? <div style={{fontSize:11,color:ROSE,letterSpacing:"0.04em",marginTop:2,fontWeight:600,lineHeight:1.2}}>Bonjour {profile.name} 👋 <span style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontWeight:500,letterSpacing:"0.1em",textTransform:"uppercase",marginLeft:6}}>by Coach Antoine</span></div>
+                ? <div style={{fontSize:11,color:ROSE,letterSpacing:"0.04em",marginTop:3,fontWeight:600}}>Bonjour {profile.name} 👋</div>
                 : <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:"0.14em",marginTop:2,textTransform:"uppercase"}}>by Coach Antoine</div>
               }
             </div>
           </div>
-
           {/* Actions — version mobile compacte / desktop complète */}
           <div style={{display:"flex",gap:7,alignItems:"center",flexShrink:0}}>
+            {/* Semainier - masqué mobile (bottom nav) */}
+            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
+              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              📆
+            </button>
             {/* Budget journalier */}
-            <button onClick={()=>setShowDailyPanel(true)} title="Journal du jour"
+            <button onClick={()=>setShowDailyPanel(true)} title="Journal du jour" className="budget-btn-mobile"
               style={{display:"flex",alignItems:"center",gap:9,background:dailyPct>90?"rgba(240,128,128,0.18)":dailyPct>0?"rgba(128,208,128,0.14)":"rgba(255,255,255,0.07)",border:`1.5px solid ${dailyPct>90?"rgba(240,128,128,0.55)":dailyPct>0?"rgba(128,208,128,0.45)":"rgba(255,255,255,0.14)"}`,borderRadius:11,padding:"7px 13px",cursor:"pointer",flexShrink:0}}>
               <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:4}}>
                   <span style={{fontSize:15,fontWeight:800,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#fff",fontFamily:"'Cormorant Garamond',serif",lineHeight:1}}>{dailyCal}</span>
-                  <span style={{fontSize:10,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"rgba(255,255,255,0.5)",lineHeight:1}}>/ {dailyGoalKcal}</span>
-                  <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",lineHeight:1}}>kcal</span>
+                  <span className="budget-goal-hide" style={{fontSize:10,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"rgba(255,255,255,0.5)",lineHeight:1}}>/ {dailyGoalKcal}</span>
+                  <span className="budget-goal-hide" style={{fontSize:9,color:"rgba(255,255,255,0.3)",lineHeight:1}}>kcal</span>
                 </div>
                 <div style={{width:72,height:4,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden"}} className="budget-bar-wrap">
                   <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#f08080":dailyPct>60?"#e8d070":"#80d080",borderRadius:99,transition:"width 0.4s"}}/>
@@ -1137,11 +1183,6 @@ export default function FitWomenApp(){
                   {dailyPct>100?`⚠ +${dailyCal-dailyGoalKcal} kcal`:remaining>0?`${remaining} restantes`:"✓ Atteint"}
                 </span>
               </div>
-            </button>
-            {/* Semainier - masqué mobile (bottom nav) */}
-            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
-              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              📆
             </button>
             {/* Panier - masqué mobile (bottom nav) */}
             <button onClick={()=>setShowCart(true)} title="Liste de courses" className="header-icon-hide"
@@ -1153,11 +1194,6 @@ export default function FitWomenApp(){
             <button onClick={()=>setShowProfile(true)} title="Mon profil" className="header-icon-hide"
               style={{background:"rgba(255,255,255,0.08)",border:`1.5px solid ${ROSE}66`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               👤
-            </button>
-            {/* Coaching - masqué mobile (bottom nav) */}
-            <button onClick={()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(true);}} title="Mon Coach" className="header-icon-hide"
-              style={{background:showCoaching?ROSE+"33":"rgba(255,255,255,0.08)",border:`1.5px solid ${showCoaching?ROSE:ROSE+"44"}`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              🏋️
             </button>
           </div>
         </div>
@@ -1179,8 +1215,135 @@ export default function FitWomenApp(){
           );
         })()}
 
+        {/* ── MODE TOGGLE ── */}
+        <div style={{display:"flex",gap:0,borderRadius:14,overflow:"hidden",border:`1.5px solid ${T.border}`,marginBottom:14,background:T.cardAlt}}>
+          {[{k:"generator",ico:"🍽️",l:"Générateur"},{k:"coach",ico:"📖",l:"Recettes Coach"}].map(({k,ico,l})=>(
+            <button key={k} onClick={()=>setRecipeMode(k)} style={{flex:1,padding:"10px 8px",background:recipeMode===k?ROSE:"transparent",color:recipeMode===k?"#fff":T.textM,border:"none",cursor:"pointer",fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:12,letterSpacing:"0.04em",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+              <span>{ico}</span> {l}
+            </button>
+          ))}
+        </div>
+
+        {/* ── RECETTES COACH ── */}
+        {recipeMode==="coach"&&(()=>{
+          const cats=["Tous","Plat","Entrée","Dessert"];
+          const filtered=COACH_RECIPES.filter(r=>coachCat==="Tous"||r.cat===coachCat);
+          const getPortions=(id,base)=>coachPortions[id]??base;
+          return(
+            <div>
+              {/* Filtres catégorie */}
+              <div style={{display:"flex",gap:7,marginBottom:16,flexWrap:"wrap"}}>
+                {cats.map(c=>(
+                  <button key={c} onClick={()=>setCoachCat(c)} style={{padding:"6px 14px",borderRadius:99,border:`1.5px solid ${coachCat===c?ROSE:T.border}`,background:coachCat===c?ROSE_L:T.card,color:coachCat===c?"#8a6040":T.textM,fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",transition:"all 0.15s"}}>
+                    {c} {c!=="Tous"&&<span style={{fontSize:10,opacity:0.7}}>({COACH_RECIPES.filter(r=>r.cat===c).length})</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Grille recettes */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
+                {filtered.map((r,i)=>{
+                  const portions=getPortions(r.id,r.basePortions);
+                  const ratio=portions/r.basePortions;
+                  const kcal=Math.round(r.kcalPer*ratio*portions/portions); // kcal par portion reste fixe
+                  return(
+                    <div key={r.id} onClick={()=>setSelectedCoach(r)}
+                      style={{background:T.card,border:`1.5px solid ${T.border}`,borderRadius:18,padding:"16px 18px",cursor:"pointer",transition:"all 0.2s",animation:`fadeIn 0.35s ease both`,animationDelay:`${i*0.04}s`,boxShadow:selectedCoach?.id===r.id?"0 4px 20px rgba(201,168,130,0.25)":"none",borderColor:selectedCoach?.id===r.id?ROSE:T.border}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                        <span style={{fontSize:26}}>{r.emoji}</span>
+                        <span style={{fontSize:10,background:r.cat==="Plat"?"#e8f4e8":r.cat==="Entrée"?"#e8eef8":"#f8e8f0",color:r.cat==="Plat"?"#3a7a3a":r.cat==="Entrée"?"#3a5a9a":"#9a3a6a",borderRadius:99,padding:"2px 9px",fontWeight:700,letterSpacing:"0.05em"}}>{r.cat}</span>
+                      </div>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:T.text,marginBottom:5,lineHeight:1.2}}>{r.name}</div>
+                      <div style={{fontSize:11,color:T.textM,marginBottom:12,lineHeight:1.4,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{r.desc}</div>
+                      <div style={{borderTop:`1px solid ${T.border}`,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div style={{display:"flex",gap:10}}>
+                          {[["🔥",r.kcalPer+" kcal"],["💪",r.macros.p+"g P"]].map(([ic,val])=>(
+                            <span key={val} style={{fontSize:10,color:T.textM,fontWeight:600}}>{ic} {val}</span>
+                          ))}
+                        </div>
+                        <span style={{fontSize:10,color:T.textM}}>👥 {r.basePortions} pers.</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Détail recette coach */}
+              {selectedCoach&&(()=>{
+                const r=selectedCoach;
+                const portions=getPortions(r.id,r.basePortions);
+                const ratio=portions/r.basePortions;
+                return(
+                  <div style={{marginTop:24,background:T.card,borderRadius:22,border:`2px solid ${ROSE}`,padding:"22px 20px",position:"relative"}}>
+                    <button onClick={()=>setSelectedCoach(null)} style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,0.07)",border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",color:T.text}}>✕</button>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
+                      <span style={{fontSize:32}}>{r.emoji}</span>
+                      <div>
+                        <span style={{fontSize:10,background:r.cat==="Plat"?"#e8f4e8":r.cat==="Entrée"?"#e8eef8":"#f8e8f0",color:r.cat==="Plat"?"#3a7a3a":r.cat==="Entrée"?"#3a5a9a":"#9a3a6a",borderRadius:99,padding:"2px 9px",fontWeight:700}}>{r.cat}</span>
+                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:T.text,marginTop:4,lineHeight:1.2}}>{r.name}</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:12,color:T.textM,marginBottom:16,lineHeight:1.5}}>{r.desc}</div>
+
+                    {/* Slider portions */}
+                    <div style={{background:T.cardAlt,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                        <span style={{fontSize:12,fontWeight:700,color:T.text}}>👥 Nombre de personnes</span>
+                        <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:ROSE}}>{portions}</span>
+                      </div>
+                      <input type="range" min={1} max={12} value={portions}
+                        onChange={e=>setCoachPortions(prev=>({...prev,[r.id]:+e.target.value}))}
+                        style={{width:"100%",accentColor:ROSE,cursor:"pointer"}}/>
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:T.textM,marginTop:4}}>
+                        <span>1</span><span>6</span><span>12</span>
+                      </div>
+                    </div>
+
+                    {/* Macros ajustées */}
+                    <div style={{display:"flex",gap:8,marginBottom:16}}>
+                      {[["🔥","Kcal/pers.",r.kcalPer],[" P","Protéines",r.macros.p+"g"],["C","Glucides",r.macros.c+"g"],["L","Lipides",r.macros.f+"g"]].map(([ic,lb,val])=>(
+                        <div key={lb} style={{flex:1,textAlign:"center",background:T.cardAlt,borderRadius:12,padding:"10px 4px"}}>
+                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE}}>{val}</div>
+                          <div style={{fontSize:9,color:T.textM,textTransform:"uppercase",letterSpacing:"0.06em",lineHeight:1.3,marginTop:2}}>{lb}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Ingrédients */}
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:T.text,marginBottom:10}}>Ingrédients · {portions} pers.</div>
+                      {r.ingredients.map((ing,i)=>{
+                        const scaledQ=ing.q*ratio;
+                        const display=scaledQ%1===0?scaledQ:scaledQ.toFixed(1);
+                        return(
+                          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${T.border}`,alignItems:"center"}}>
+                            <span style={{fontSize:13,color:T.text}}>{ing.n}</span>
+                            <span style={{fontSize:13,fontWeight:700,color:ROSE,whiteSpace:"nowrap",marginLeft:8}}>{display}{ing.u?" "+ing.u:""}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Étapes */}
+                    <div>
+                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:T.text,marginBottom:10}}>Préparation</div>
+                      {r.steps.map((s,i)=>(
+                        <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}}>
+                          <div style={{minWidth:24,height:24,borderRadius:"50%",background:ROSE,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,marginTop:1}}>{i+1}</div>
+                          <div style={{fontSize:13,color:T.textM,lineHeight:1.55}}>{s}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          );
+        })()}
+
+        {recipeMode==="generator"&&<>
         {/* ── GOAL TABS ── */}
-        <div style={{display:"flex",gap:10,padding:"14px 0 18px"}}>
+        <div style={{display:"flex",gap:8,padding:"14px 0 10px"}}>
           {Object.entries(GOALS).map(([key,cfg])=>(
             <button key={key} onClick={()=>{
                 const order=["seche","maintien","muscle"];
@@ -1196,30 +1359,25 @@ export default function FitWomenApp(){
                 setActiveGoal(key);setSelected(null);setShowDetail(false);setPage(1);setActiveMeal("Tous");setShowFavsOnly(false);setActiveTagFilter(null);setSortBy("default");
               }}
               style={{
-                flex:1,
-                padding:"16px 8px 14px",
-                border:`2px solid ${activeGoal===key?cfg.color:cfg.color+"28"}`,
-                borderRadius:18,
-                background:activeGoal===key
-                  ?`linear-gradient(135deg,${cfg.color}22,${cfg.color}10)`
-                  :darkMode?"rgba(255,255,255,0.03)":"rgba(255,255,255,0.7)",
-                color:activeGoal===key?cfg.color:T.textM,
-                fontFamily:"'Jost',sans-serif",fontWeight:600,
+                flex:1,padding:"12px 6px",
+                border:"none",
+                borderRadius:20,
+                background:activeGoal===key?DARK:cfg.color+"12",
+                color:activeGoal===key?"#fff":cfg.color,
+                fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,
                 cursor:"pointer",
                 transition:"all 0.22s",
                 textAlign:"center",
-                boxShadow:activeGoal===key?`0 6px 24px ${cfg.color}30`:"none",
-                position:"relative",
-                overflow:"hidden",
+                boxShadow:activeGoal===key
+                  ?`0 4px 18px ${cfg.color}44, inset 0 1px 0 rgba(255,255,255,0.08)`
+                  :"0 1px 4px rgba(0,0,0,0.06)",
               }}>
-              {activeGoal===key&&<div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${cfg.color}00,${cfg.color},${cfg.color}00)`,borderRadius:"18px 18px 0 0"}}/>}
-              <div style={{fontSize:26,marginBottom:6,lineHeight:1}}>{cfg.emoji}</div>
-              <div style={{fontWeight:800,fontSize:11,letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:3}}>{cfg.label}</div>
-              <div style={{fontSize:9,color:activeGoal===key?cfg.color+"bb":T.textM,lineHeight:1.3,opacity:0.8}}>{cfg.desc}</div>
+              <div style={{fontSize:22,marginBottom:3}}>{cfg.emoji}</div>
+              <div style={{textTransform:"uppercase",fontWeight:800,fontSize:9,letterSpacing:"0.08em"}}>{cfg.label}</div>
+              {activeGoal===key&&<div style={{width:18,height:2,borderRadius:99,background:cfg.color,margin:"5px auto 0"}}/>}
             </button>
           ))}
         </div>
-
 
         {/* ── FILTRES ── */}
         <div style={{marginBottom:14}}>
@@ -1407,7 +1565,7 @@ export default function FitWomenApp(){
             </div>
           )}
         </div>
-      </div>
+      </div></>}
 
       {/* ── DETAIL MOBILE ── */}
       {isMobile&&showDetail&&selected&&(
@@ -1740,13 +1898,13 @@ export default function FitWomenApp(){
               <div>
                 <div style={{fontSize:11,color:ROSE,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Coach Antoine</div>
                 <div style={{fontSize:12,color:"#fff",lineHeight:1.55,fontStyle:"italic"}}>
-                  "Cette app est conçue pour mes clientes — suis le programme et les résultats suivront 💪"
+                  "Cette app est conçue pour mes clientes — une bibliothèque de recettes ajustables pour te faire plaisir  💪"
                 </div>
               </div>
             </div>
             <div style={{textAlign:"center",marginBottom:24}}>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:700,color:DARK,marginBottom:4}}>Bienvenue ✨</div>
-              <div style={{fontSize:12,color:"#888",lineHeight:1.6,maxWidth:300,margin:"0 auto"}}>Recettes sèche · maintien · prise de masse, planification hebdo et suivi calorique — tout ce qu'il faut pour atteindre ton objectif. 🎯</div>
+              <div style={{fontSize:12,color:"#888",lineHeight:1.65,maxWidth:300,margin:"0 auto"}}>Bienvenue sur l'app nutrition officielle de Coach Antoine. Elle te permet de découvrir des recettes adaptées à ton objectif, planifier tes repas, suivre tes apports et progresser à ton rythme — conçue pour les femmes actives. 💪</div>
             </div>
             {obStep===0&&<>
               <div style={{marginBottom:18}}>
