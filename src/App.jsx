@@ -1565,7 +1565,8 @@ export default function FitWomenApp(){
             </div>
           )}
         </div>
-      </div></>}
+      </>}
+      </div>
 
       {/* ── DETAIL MOBILE ── */}
       {isMobile&&showDetail&&selected&&(
@@ -1898,7 +1899,7 @@ export default function FitWomenApp(){
               <div>
                 <div style={{fontSize:11,color:ROSE,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Coach Antoine</div>
                 <div style={{fontSize:12,color:"#fff",lineHeight:1.55,fontStyle:"italic"}}>
-                  "Cette app est conçue pour mes clientes — une bibliothèque de recettes ajustables pour te faire plaisir  💪"
+                  "Cette app est conçue pour mes clientes — suis le programme et les résultats suivront 💪"
                 </div>
               </div>
             </div>
@@ -2229,3 +2230,4 @@ export default function FitWomenApp(){
     </div>
   );
 }
+
