@@ -1162,19 +1162,14 @@ export default function FitWomenApp(){
           </div>
           {/* Actions — version mobile compacte / desktop complète */}
           <div style={{display:"flex",gap:7,alignItems:"center",flexShrink:0}}>
-            {/* Semainier - masqué mobile (bottom nav) */}
-            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
-              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              📆
-            </button>
             {/* Budget journalier */}
             <button onClick={()=>setShowDailyPanel(true)} title="Journal du jour" className="budget-btn-mobile"
               style={{display:"flex",alignItems:"center",gap:9,background:dailyPct>90?"rgba(240,128,128,0.18)":dailyPct>0?"rgba(128,208,128,0.14)":"rgba(255,255,255,0.07)",border:`1.5px solid ${dailyPct>90?"rgba(240,128,128,0.55)":dailyPct>0?"rgba(128,208,128,0.45)":"rgba(255,255,255,0.14)"}`,borderRadius:11,padding:"7px 13px",cursor:"pointer",flexShrink:0}}>
               <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:4}}>
                 <div style={{display:"flex",alignItems:"baseline",gap:4}}>
                   <span style={{fontSize:15,fontWeight:800,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"#fff",fontFamily:"'Cormorant Garamond',serif",lineHeight:1}}>{dailyCal}</span>
-                  <span className="budget-goal-hide" style={{fontSize:10,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"rgba(255,255,255,0.5)",lineHeight:1}}>/ {dailyGoalKcal}</span>
-                  <span className="budget-goal-hide" style={{fontSize:9,color:"rgba(255,255,255,0.3)",lineHeight:1}}>kcal</span>
+                  <span style={{fontSize:10,fontWeight:600,color:dailyPct>90?"#f08080":dailyPct>0?"#90d090":"rgba(255,255,255,0.5)",lineHeight:1}}>/ {dailyGoalKcal}</span>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.3)",lineHeight:1}}>kcal</span>
                 </div>
                 <div style={{width:72,height:4,background:"rgba(255,255,255,0.1)",borderRadius:99,overflow:"hidden"}} className="budget-bar-wrap">
                   <div style={{height:"100%",width:`${dailyPct}%`,background:dailyPct>90?"#f08080":dailyPct>60?"#e8d070":"#80d080",borderRadius:99,transition:"width 0.4s"}}/>
@@ -1183,6 +1178,11 @@ export default function FitWomenApp(){
                   {dailyPct>100?`⚠ +${dailyCal-dailyGoalKcal} kcal`:remaining>0?`${remaining} restantes`:"✓ Atteint"}
                 </span>
               </div>
+            </button>
+            {/* Semainier - masqué mobile (bottom nav) */}
+            <button onClick={()=>setShowWeek(true)} title="Semainier" className="header-icon-hide"
+              style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.14)",borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              📆
             </button>
             {/* Panier - masqué mobile (bottom nav) */}
             <button onClick={()=>setShowCart(true)} title="Liste de courses" className="header-icon-hide"
@@ -1301,12 +1301,16 @@ export default function FitWomenApp(){
 
                     {/* Macros ajustées */}
                     <div style={{display:"flex",gap:8,marginBottom:16}}>
-                      {[["🔥","Kcal/pers.",r.kcalPer],[" P","Protéines",r.macros.p+"g"],["C","Glucides",r.macros.c+"g"],["L","Lipides",r.macros.f+"g"]].map(([ic,lb,val])=>(
+                      {[["🔥","Kcal total",Math.round(r.kcalPer*portions)],["💪","Prot. tot.",Math.round(r.macros.p*portions)+"g"],["🌾","Gluc. tot.",Math.round(r.macros.c*portions)+"g"],["🫒","Lip. tot.",Math.round(r.macros.f*portions)+"g"]].map(([ic,lb,val])=>(
                         <div key={lb} style={{flex:1,textAlign:"center",background:T.cardAlt,borderRadius:12,padding:"10px 4px"}}>
+                          <div style={{fontSize:13,marginBottom:2}}>{ic}</div>
                           <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE}}>{val}</div>
                           <div style={{fontSize:9,color:T.textM,textTransform:"uppercase",letterSpacing:"0.06em",lineHeight:1.3,marginTop:2}}>{lb}</div>
                         </div>
                       ))}
+                    </div>
+                    <div style={{fontSize:10,color:T.textM,textAlign:"center",marginBottom:14,fontStyle:"italic"}}>
+                      Soit {r.kcalPer} kcal · {r.macros.p}g P · {r.macros.c}g G · {r.macros.f}g L <strong>par personne</strong>
                     </div>
 
                     {/* Ingrédients */}
@@ -1362,14 +1366,14 @@ export default function FitWomenApp(){
                 flex:1,padding:"12px 6px",
                 border:"none",
                 borderRadius:20,
-                background:activeGoal===key?DARK:cfg.color+"12",
+                background:activeGoal===key?cfg.color:cfg.color+"18",
                 color:activeGoal===key?"#fff":cfg.color,
                 fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,
                 cursor:"pointer",
                 transition:"all 0.22s",
                 textAlign:"center",
                 boxShadow:activeGoal===key
-                  ?`0 4px 18px ${cfg.color}44, inset 0 1px 0 rgba(255,255,255,0.08)`
+                  ?`0 4px 18px ${cfg.color}55, inset 0 1px 0 rgba(255,255,255,0.15)`
                   :"0 1px 4px rgba(0,0,0,0.06)",
               }}>
               <div style={{fontSize:22,marginBottom:3}}>{cfg.emoji}</div>
@@ -2230,4 +2234,3 @@ export default function FitWomenApp(){
     </div>
   );
 }
-
