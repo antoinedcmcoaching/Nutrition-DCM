@@ -560,45 +560,6 @@ const getTags=(r)=>{
 };
 const ALL_TAGS=["💪 Haute protéine","⚡ Léger","🕐 Rapide","🌱 Végétarien"];
 
-// ─── RECETTES COACH ───────────────────────────────────────────────────────────
-const COACH_RECIPES=[
-  {id:"cr1",cat:"Plat",emoji:"🍚",name:"Risotto crevettes au lait de coco",desc:"Un risotto crémeux aux saveurs exotiques, finalé au jus de citron vert et zeste.",basePortions:4,kcalPer:520,macros:{p:24,c:62,f:14},
-   ingredients:[{q:300,u:"g",n:"Riz à risotto (Arborio ou Carnaroli)"},{q:250,u:"g",n:"Crevettes décortiquées cuites"},{q:200,u:"mL",n:"Lait de coco"},{q:2,u:"",n:"Courgettes"},{q:2,u:"",n:"Citrons verts"},{q:2,u:"L",n:"Bouillon de légumes maison"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"pincée",n:"Sel & poivre"}],
-   steps:["Préparez le bouillon : faites mijoter carottes, navet, céleri, oignons et laurier 45 min. Filtrez.","Faites revenir le riz dans l'huile d'olive jusqu'à ce qu'il soit nacré.","Ajoutez le bouillon louche par louche (16 min). Remplacez les 2 dernières louches par le lait de coco.","Ajoutez les courgettes en dés et les crevettes, cuisez 2 min.","Terminez avec le jus et le zeste d'un citron vert. Ajustez selon le goût."]},
-  {id:"cr2",cat:"Dessert",emoji:"🍫",name:"Stracciatella maison",desc:"Un dessert léger et onctueux — fromage blanc, blancs d'œufs montés et copeaux de chocolat noir.",basePortions:4,kcalPer:170,macros:{p:14,c:15,f:6},
-   ingredients:[{q:300,u:"g",n:"Fromage blanc 3% MG"},{q:3,u:"",n:"Blancs d'œufs"},{q:80,u:"g",n:"Chocolat noir en tablette"},{q:40,u:"g",n:"Sucre"},{q:1,u:"c.c.",n:"Vanille en poudre"}],
-   steps:["Fouettez les blancs d'œufs avec le sucre et la vanille jusqu'à obtenir une meringue ferme.","Râpez ou coupez finement le chocolat en copeaux.","Incorporez délicatement les copeaux de chocolat et le fromage blanc.","Réservez au frais 1 à 2h avant de déguster."]},
-  {id:"cr3",cat:"Entrée",emoji:"🥗",name:"Coleslaw maison aux raisins secs",desc:"Un coleslaw frais et croquant, sauce fromage blanc citronnée et raisins secs pour la douceur.",basePortions:4,kcalPer:130,macros:{p:6,c:18,f:4},
-   ingredients:[{q:250,u:"g",n:"Carottes"},{q:200,u:"g",n:"Chou blanc"},{q:40,u:"g",n:"Raisins secs"},{q:150,u:"g",n:"Fromage blanc nature"},{q:1,u:"c.s.",n:"Jus de citron"},{q:1,u:"c.s.",n:"Huile d'olive"},{q:1,u:"c.s.",n:"Vinaigre de cidre"},{q:1.5,u:"c.c.",n:"Moutarde"},{q:1,u:"pincée",n:"Sel & poivre"}],
-   steps:["Lavez, épluchez et râpez les carottes et le chou. Placez dans un saladier.","Mélangez tous les ingrédients de la sauce (fromage blanc, citron, huile, vinaigre, moutarde, sel, poivre).","Ajoutez les raisins secs et la sauce sur les légumes. Mélangez bien."]},
-  {id:"cr4",cat:"Plat",emoji:"🍝",name:"Tagliatelles complètes poisson-épinard",desc:"Des pâtes complètes nappées d'une sauce crémeuse saumon-épinards et parmesan.",basePortions:4,kcalPer:580,macros:{p:32,c:68,f:16},
-   ingredients:[{q:400,u:"g",n:"Pâtes tagliatelles complètes"},{q:200,u:"g",n:"Pavé de saumon ou truite"},{q:200,u:"g",n:"Épinards frais ou surgelés"},{q:200,u:"g",n:"Fromage blanc 3% MG"},{q:100,u:"g",n:"Parmesan râpé"},{q:1,u:"",n:"Oignon"},{q:2,u:"",n:"Gousses d'ail"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"pincée",n:"Poivre & zeste citron (optionnel)"}],
-   steps:["Faites cuire les pâtes al dente dans une grande casserole d'eau salée. Réservez une tasse d'eau de cuisson.","Faites revenir l'oignon et l'ail émincés dans l'huile d'olive.","Ajoutez les épinards, puis le saumon en morceaux. Cuisez 2-3 min.","Incorporez le fromage blanc. Ajoutez les pâtes et mélangez (eau de cuisson si trop épais).","Finissez avec le parmesan et un zeste de citron."]},
-  {id:"cr5",cat:"Entrée",emoji:"🥗",name:"Salade à la diable",desc:"Betteraves, pommes, noix, gouda et mâche — une salade colorée avec vinaigrette à l'huile de lin.",basePortions:6,kcalPer:220,macros:{p:6,c:14,f:16},
-   ingredients:[{q:6,u:"",n:"Betteraves cuites"},{q:3,u:"",n:"Pommes"},{q:100,u:"g",n:"Noix"},{q:100,u:"g",n:"Gouda"},{q:150,u:"g",n:"Mâche"},{q:1,u:"",n:"Oignon rouge (facultatif)"},{q:3,u:"c.s.",n:"Huile de lin, colza ou cameline"},{q:1.5,u:"c.s.",n:"Vinaigre de cidre"},{q:1,u:"pincée",n:"Sel & poivre"}],
-   steps:["Coupez les betteraves en dés, les pommes et le fromage en morceaux.","Émincez finement l'oignon. Hachez grossièrement les noix.","Mélangez tous les ingrédients dans un saladier avec la mâche.","Préparez la vinaigrette (huile, vinaigre, sel, poivre). Arrosez et servez."]},
-  {id:"cr6",cat:"Plat",emoji:"🌱",name:"Quinoa à la méditerranéenne",desc:"Quinoa, œufs pochés sur lit de tomates et champignons au curry, couronné de féta.",basePortions:4,kcalPer:430,macros:{p:20,c:42,f:18},
-   ingredients:[{q:200,u:"g",n:"Quinoa"},{q:4,u:"",n:"Œufs"},{q:400,u:"g",n:"Tomates pelées en boîte"},{q:200,u:"g",n:"Champignons frais"},{q:50,u:"g",n:"Féta"},{q:1,u:"",n:"Oignon"},{q:2,u:"c.c.",n:"Curry"},{q:4,u:"c.s.",n:"Huile d'olive"}],
-   steps:["Cuire le quinoa selon les indications du paquet.","Faire revenir l'oignon puis les champignons avec curry et sel.","Ajouter les tomates concassées, cuire 5 min.","Casser les œufs sur le mélange, couvrir et cuire 3-5 min selon la cuisson souhaitée.","Servir le quinoa avec le mélange légumes/œufs et la féta émiettée."]},
-  {id:"cr7",cat:"Plat",emoji:"🍗",name:"Poulet sauce butternut & riz curcuma",desc:"Escalopes de poulet nappées d'une sauce butternut onctueuse, sur riz basmati au curcuma et noix de cajou.",basePortions:6,kcalPer:490,macros:{p:38,c:52,f:14},
-   ingredients:[{q:600,u:"g",n:"Escalopes de poulet"},{q:360,u:"g",n:"Riz basmati"},{q:1,u:"",n:"Demi-butternut"},{q:1,u:"",n:"Oignon"},{q:75,u:"mL",n:"Lait demi-écrémé"},{q:2,u:"c.s.",n:"Huile de sésame"},{q:1,u:"c.c.",n:"Curcuma"},{q:1,u:"c.c.",n:"Paprika"},{q:1,u:"poignée",n:"Noix de cajou non salées"}],
-   steps:["Faites suer l'oignon dans l'huile d'olive. Ajoutez le butternut en dés et le paprika.","Couvrez d'eau (1 cm au-dessus), cuisez à feu doux 15-20 min.","Faites cuire le riz 10 min, égouttez et ajoutez le curcuma.","Saisissez le poulet en dés à la poêle.","Mixez la préparation butternut avec le lait et l'huile de sésame. Salez.","Terminez la cuisson du poulet dans la sauce. Servez sur le riz avec les noix de cajou."]},
-  {id:"cr8",cat:"Dessert",emoji:"🍎",name:"Salade de fruits à la cannelle",desc:"Raisins blonds, clémentines, banane et pommes, marinés dans un jus d'orange vanillé à la cannelle.",basePortions:6,kcalPer:140,macros:{p:1.5,c:34,f:0.4},
-   ingredients:[{q:450,u:"g",n:"Raisins blonds"},{q:5,u:"",n:"Clémentines"},{q:1,u:"",n:"Banane"},{q:2,u:"",n:"Pommes rouges"},{q:2,u:"",n:"Oranges (jus)"},{q:3,u:"c.c.",n:"Sucre cassonade"},{q:1,u:"c.c.",n:"Arôme vanille"},{q:1,u:"c.c.",n:"Cannelle (optionnel)"}],
-   steps:["Coupez les raisins en deux (ôter les pépins), pelez et coupez les clémentines, émincez la banane.","Épluchez les pommes, retirez le cœur et coupez en dés.","Versez le jus d'orange sur les fruits. Ajoutez la vanille, le sucre et la cannelle.","Mélangez bien et réservez au frais avant de déguster."]},
-  {id:"cr9",cat:"Plat",emoji:"🫘",name:"Dahl de lentilles corail",desc:"Un dahl épicé au curry, curcuma et gingembre frais, parfumé à la coriandre ou au persil.",basePortions:6,kcalPer:220,macros:{p:12,c:34,f:5},
-   ingredients:[{q:250,u:"g",n:"Lentilles corail"},{q:200,u:"g",n:"Purée de tomates"},{q:250,u:"g",n:"Eau"},{q:1,u:"",n:"Oignon"},{q:1,u:"",n:"Gousse d'ail"},{q:15,u:"g",n:"Gingembre frais"},{q:1,u:"c.s.",n:"Curry"},{q:1,u:"c.s.",n:"Curcuma"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"poignée",n:"Persil ou coriandre"}],
-   steps:["Rincez et égouttez les lentilles. Émincez l'oignon et l'ail.","Faites revenir l'ail et l'oignon dans l'huile d'olive sans colorer.","Ajoutez les lentilles, la purée de tomates, les épices et le sel. Mélangez.","Cuisez 30 min à feu moyen en remuant. Ajoutez de l'eau si les lentilles accrochent.","Servez chaud avec quelques feuilles de persil ou coriandre."]},
-  {id:"cr10",cat:"Dessert",emoji:"🍓",name:"Faisselle aux fruits frais & sésame",desc:"Faisselle crémeuse au miel, garnie de fruits de saison et de graines de sésame torréfiées.",basePortions:4,kcalPer:190,macros:{p:10,c:22,f:7},
-   ingredients:[{q:400,u:"g",n:"Faisselle 4,5% MG"},{q:400,u:"g",n:"Fruits de saison de votre choix"},{q:60,u:"g",n:"Graines de sésame"},{q:20,u:"g",n:"Miel (facultatif)"}],
-   steps:["Torréfiez le sésame à sec dans une poêle antiadhésive sur feu vif, en remuant. Réservez dans un bol.","Lavez et coupez les fruits en morceaux.","Égouttez la faisselle, mélangez avec le miel, versez en verrines.","Garnissez des fruits frais et du sésame torréfié en topping."]},
-  {id:"cr11",cat:"Plat",emoji:"🐟",name:"Taboulé de sardines aux légumes",desc:"Semoule complète gonflée à l'huile de sardines et jus de citron, avec légumes de saison et sardines.",basePortions:4,kcalPer:460,macros:{p:28,c:52,f:14},
-   ingredients:[{q:240,u:"g",n:"Semoule complète crue"},{q:3,u:"boîtes",n:"Sardines à l'huile d'olive"},{q:400,u:"g",n:"Légumes de saison"},{q:1,u:"",n:"Oignon rouge"},{q:1,u:"",n:"Boîte de maïs"},{q:2,u:"c.s.",n:"Huile d'olive"},{q:1,u:"",n:"Citron jaune (jus)"},{q:1,u:"poignée",n:"Ciboulette ou coriandre"}],
-   steps:["Faites bouillir de l'eau. Préparez et coupez les légumes en dés.","Faites revenir l'oignon et les légumes dans l'huile d'olive.","Ouvrez les sardines, réservez en conservant l'huile.","Versez la semoule dans un saladier. Ajoutez sel, huile des sardines, jus de citron et eau bouillante (couvrir entièrement). Couvrez et laissez gonfler 15 min.","Mélangez les légumes cuits à la semoule. Disposez les sardines. Ajoutez les herbes ciselées."]},
-  {id:"cr12",cat:"Dessert",emoji:"🍐",name:"Fromage blanc, poires caramélisées & flocons d'avoine",desc:"Verrines de fromage blanc sur lit de poires caramélisées au beurre et flocons d'avoine toastés.",basePortions:6,kcalPer:165,macros:{p:8,c:26,f:4},
-   ingredients:[{q:400,u:"g",n:"Fromage blanc"},{q:4,u:"",n:"Poires"},{q:80,u:"g",n:"Flocons d'avoine"},{q:20,u:"g",n:"Sucre"},{q:10,u:"g",n:"Beurre demi-sel"}],
-   steps:["Pelez et coupez les poires en dés.","Faites revenir les poires dans une poêle avec le beurre et le sucre jusqu'à dorure.","Ajoutez les flocons d'avoine. Cuisez jusqu'à caramélisation.","Versez le fromage blanc en verrines. Ajoutez le mélange poires/flocons par-dessus. Laissez refroidir."]}
-];
 
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
 export default function FitWomenApp(){
@@ -613,10 +574,6 @@ export default function FitWomenApp(){
   const [page,setPage]=useState(1);
   const [activeTab,setActiveTab]=useState("recette");
   const [showCoaching,setShowCoaching]=useState(false);
-  const [recipeMode,setRecipeMode]=useState("generator"); // "generator" | "coach"
-  const [coachCat,setCoachCat]=useState("Tous");
-  const [selectedCoach,setSelectedCoach]=useState(null);
-  const [coachPortions,setCoachPortions]=useState({});
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   const [isLoading,setIsLoading]=useState(false);
   const loadingTimer=useRef(null);
@@ -1222,139 +1179,7 @@ export default function FitWomenApp(){
             </div>
           );
         })()}
-
-        {/* ── MODE TOGGLE ── */}
-        <div style={{display:"flex",gap:0,borderRadius:14,overflow:"hidden",border:`1.5px solid ${T.border}`,marginBottom:14,background:T.cardAlt}}>
-          {[{k:"generator",ico:"🍽️",l:"Générateur"},{k:"coach",ico:"📖",l:"Recettes Coach"}].map(({k,ico,l})=>(
-            <button key={k} onClick={()=>setRecipeMode(k)} style={{flex:1,padding:"10px 8px",background:recipeMode===k?ROSE:"transparent",color:recipeMode===k?"#fff":T.textM,border:"none",cursor:"pointer",fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:12,letterSpacing:"0.04em",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-              <span>{ico}</span> {l}
-            </button>
-          ))}
-        </div>
-
-        {/* ── RECETTES COACH ── */}
-        {recipeMode==="coach"&&(()=>{
-          const cats=["Tous","Plat","Entrée","Dessert"];
-          const filtered=COACH_RECIPES.filter(r=>coachCat==="Tous"||r.cat===coachCat);
-          const getPortions=(id,base)=>coachPortions[id]??base;
-          return(
-            <div>
-              {/* Filtres catégorie */}
-              <div style={{display:"flex",gap:7,marginBottom:16,flexWrap:"wrap"}}>
-                {cats.map(c=>(
-                  <button key={c} onClick={()=>setCoachCat(c)} style={{padding:"6px 14px",borderRadius:99,border:`1.5px solid ${coachCat===c?ROSE:T.border}`,background:coachCat===c?ROSE_L:T.card,color:coachCat===c?"#8a6040":T.textM,fontFamily:"'Jost',sans-serif",fontWeight:700,fontSize:11,cursor:"pointer",transition:"all 0.15s"}}>
-                    {c} {c!=="Tous"&&<span style={{fontSize:10,opacity:0.7}}>({COACH_RECIPES.filter(r=>r.cat===c).length})</span>}
-                  </button>
-                ))}
-              </div>
-
-              {/* Grille recettes */}
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}}>
-                {filtered.map((r,i)=>{
-                  const portions=getPortions(r.id,r.basePortions);
-                  const ratio=portions/r.basePortions;
-                  const kcal=Math.round(r.kcalPer*ratio*portions/portions); // kcal par portion reste fixe
-                  return(
-                    <div key={r.id} onClick={()=>setSelectedCoach(r)}
-                      style={{background:T.card,border:`1.5px solid ${T.border}`,borderRadius:18,padding:"16px 18px",cursor:"pointer",transition:"all 0.2s",animation:`fadeIn 0.35s ease both`,animationDelay:`${i*0.04}s`,boxShadow:selectedCoach?.id===r.id?"0 4px 20px rgba(201,168,130,0.25)":"none",borderColor:selectedCoach?.id===r.id?ROSE:T.border}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                        <span style={{fontSize:26}}>{r.emoji}</span>
-                        <span style={{fontSize:10,background:r.cat==="Plat"?"#e8f4e8":r.cat==="Entrée"?"#e8eef8":"#f8e8f0",color:r.cat==="Plat"?"#3a7a3a":r.cat==="Entrée"?"#3a5a9a":"#9a3a6a",borderRadius:99,padding:"2px 9px",fontWeight:700,letterSpacing:"0.05em"}}>{r.cat}</span>
-                      </div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:T.text,marginBottom:5,lineHeight:1.2}}>{r.name}</div>
-                      <div style={{fontSize:11,color:T.textM,marginBottom:12,lineHeight:1.4,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{r.desc}</div>
-                      <div style={{borderTop:`1px solid ${T.border}`,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                        <div style={{display:"flex",gap:10}}>
-                          {[["🔥",r.kcalPer+" kcal"],["💪",r.macros.p+"g P"]].map(([ic,val])=>(
-                            <span key={val} style={{fontSize:10,color:T.textM,fontWeight:600}}>{ic} {val}</span>
-                          ))}
-                        </div>
-                        <span style={{fontSize:10,color:T.textM}}>👥 {r.basePortions} pers.</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Détail recette coach */}
-              {selectedCoach&&(()=>{
-                const r=selectedCoach;
-                const portions=getPortions(r.id,r.basePortions);
-                const ratio=portions/r.basePortions;
-                return(
-                  <div style={{marginTop:24,background:T.card,borderRadius:22,border:`2px solid ${ROSE}`,padding:"22px 20px",position:"relative"}}>
-                    <button onClick={()=>setSelectedCoach(null)} style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,0.07)",border:"none",borderRadius:99,width:30,height:30,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",color:T.text}}>✕</button>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:4}}>
-                      <span style={{fontSize:32}}>{r.emoji}</span>
-                      <div>
-                        <span style={{fontSize:10,background:r.cat==="Plat"?"#e8f4e8":r.cat==="Entrée"?"#e8eef8":"#f8e8f0",color:r.cat==="Plat"?"#3a7a3a":r.cat==="Entrée"?"#3a5a9a":"#9a3a6a",borderRadius:99,padding:"2px 9px",fontWeight:700}}>{r.cat}</span>
-                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:T.text,marginTop:4,lineHeight:1.2}}>{r.name}</div>
-                      </div>
-                    </div>
-                    <div style={{fontSize:12,color:T.textM,marginBottom:16,lineHeight:1.5}}>{r.desc}</div>
-
-                    {/* Slider portions */}
-                    <div style={{background:T.cardAlt,borderRadius:14,padding:"14px 16px",marginBottom:16}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                        <span style={{fontSize:12,fontWeight:700,color:T.text}}>👥 Nombre de personnes</span>
-                        <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:22,fontWeight:700,color:ROSE}}>{portions}</span>
-                      </div>
-                      <input type="range" min={1} max={12} value={portions}
-                        onChange={e=>setCoachPortions(prev=>({...prev,[r.id]:+e.target.value}))}
-                        style={{width:"100%",accentColor:ROSE,cursor:"pointer"}}/>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:9,color:T.textM,marginTop:4}}>
-                        <span>1</span><span>6</span><span>12</span>
-                      </div>
-                    </div>
-
-                    {/* Macros ajustées */}
-                    <div style={{display:"flex",gap:8,marginBottom:16}}>
-                      {[["🔥","Kcal total",Math.round(r.kcalPer*portions)],["💪","Prot. tot.",Math.round(r.macros.p*portions)+"g"],["🌾","Gluc. tot.",Math.round(r.macros.c*portions)+"g"],["🫒","Lip. tot.",Math.round(r.macros.f*portions)+"g"]].map(([ic,lb,val])=>(
-                        <div key={lb} style={{flex:1,textAlign:"center",background:T.cardAlt,borderRadius:12,padding:"10px 4px"}}>
-                          <div style={{fontSize:13,marginBottom:2}}>{ic}</div>
-                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE}}>{val}</div>
-                          <div style={{fontSize:9,color:T.textM,textTransform:"uppercase",letterSpacing:"0.06em",lineHeight:1.3,marginTop:2}}>{lb}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{fontSize:10,color:T.textM,textAlign:"center",marginBottom:14,fontStyle:"italic"}}>
-                      Soit {r.kcalPer} kcal · {r.macros.p}g P · {r.macros.c}g G · {r.macros.f}g L <strong>par personne</strong>
-                    </div>
-
-                    {/* Ingrédients */}
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:T.text,marginBottom:10}}>Ingrédients · {portions} pers.</div>
-                      {r.ingredients.map((ing,i)=>{
-                        const scaledQ=ing.q*ratio;
-                        const display=scaledQ%1===0?scaledQ:scaledQ.toFixed(1);
-                        return(
-                          <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${T.border}`,alignItems:"center"}}>
-                            <span style={{fontSize:13,color:T.text}}>{ing.n}</span>
-                            <span style={{fontSize:13,fontWeight:700,color:ROSE,whiteSpace:"nowrap",marginLeft:8}}>{display}{ing.u?" "+ing.u:""}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Étapes */}
-                    <div>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:17,fontWeight:700,color:T.text,marginBottom:10}}>Préparation</div>
-                      {r.steps.map((s,i)=>(
-                        <div key={i} style={{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}}>
-                          <div style={{minWidth:24,height:24,borderRadius:"50%",background:ROSE,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0,marginTop:1}}>{i+1}</div>
-                          <div style={{fontSize:13,color:T.textM,lineHeight:1.55}}>{s}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          );
-        })()}
-
-        {recipeMode==="generator"&&<>
-        {/* ── GOAL TABS ── */}
+                {/* ── GOAL TABS ── */}
         <div style={{display:"flex",gap:10,padding:"14px 0 10px"}}> 
           {Object.entries(GOALS).map(([key,cfg])=>{
             const isActive=activeGoal===key;
@@ -1389,17 +1214,10 @@ export default function FitWomenApp(){
                 boxShadow:isActive?"none":"0 1px 5px rgba(0,0,0,0.07)",
                 animation:isActive?glowAnims[key]:"none",
               }}>
-              {isActive&&<div style={{position:"absolute",top:0,left:"-120%",width:"55%",height:"100%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.28),transparent)",animation:"goalShine 2.2s ease-in-out 0.5s infinite",pointerEvents:"none"}}/>}
-              {isActive&&<div style={{position:"absolute",top:0,left:"22%",right:"22%",height:2.5,borderRadius:99,background:"rgba(255,255,255,0.65)",boxShadow:"0 0 7px rgba(255,255,255,0.9)"}}/>}
               {isActive&&<div style={{position:"absolute",bottom:0,left:0,right:0,height:"35%",background:"linear-gradient(to top,rgba(0,0,0,0.12),transparent)",pointerEvents:"none"}}/>}
               <div style={{fontSize:28,marginBottom:5,display:"block",filter:isActive?"drop-shadow(0 3px 8px rgba(0,0,0,0.35))":"none",animation:isActive?"emojiPop 0.45s cubic-bezier(0.34,1.56,0.64,1)":"none",transformOrigin:"center"}}>{cfg.emoji}</div>
-              <div style={{textTransform:"uppercase",fontWeight:900,fontSize:9,letterSpacing:"0.12em",textShadow:isActive?"0 1px 4px rgba(0,0,0,0.35)":"none",marginBottom:7}}>{cfg.label}</div>
-              {isActive
-                ?<div style={{display:"flex",gap:3,justifyContent:"center",alignItems:"center"}}>
-                   {[0,1,2].map(i=><div key={i} style={{width:i===1?6:4,height:i===1?6:4,borderRadius:"50%",background:"rgba(255,255,255,0.85)",animation:`dotBounce 1.2s ease-in-out ${i*0.15}s infinite`,boxShadow:"0 0 5px rgba(255,255,255,0.7)"}}/>)}
-                 </div>
-                :<div style={{width:16,height:2,borderRadius:99,background:`${cfg.color}40`,margin:"0 auto"}}/>
-              }
+              <div style={{textTransform:"uppercase",fontWeight:900,fontSize:9,letterSpacing:"0.12em",textShadow:isActive?"0 1px 4px rgba(0,0,0,0.35)":"none",marginBottom:4}}>{cfg.label}</div>
+              <div style={{width:isActive?20:14,height:2,borderRadius:99,background:isActive?"rgba(255,255,255,0.6)":`${cfg.color}40`,margin:"0 auto",transition:"all 0.3s ease"}}/>
             </button>
             );
           })}
@@ -1591,7 +1409,6 @@ export default function FitWomenApp(){
             </div>
           )}
         </div>
-      </>}
       </div>
 
       {/* ── DETAIL MOBILE ── */}
