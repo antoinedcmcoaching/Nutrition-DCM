@@ -55,6 +55,17 @@ const FOODS = {
   carotte:       { name:"Carottes",            cal:41, p:0.9,c:10, f:0.2, emoji:"🥕", fiber:2.8,iron:0.4, vitC:6,  calcium:33, magnesium:12,  omega3:0   },
   cacao:         { name:"Cacao en poudre",     cal:228,p:20, c:54, f:14,  emoji:"🍫", fiber:33, iron:13.9,vitC:0,  calcium:128,magnesium:499, omega3:0.1 },
   miel:          { name:"Miel",                cal:304,p:0.3,c:82, f:0,   emoji:"🍯", fiber:0.2,iron:0.4, vitC:1,  calcium:6,  magnesium:2,   omega3:0   },
+  // ── 10 nouveaux aliments CIQUAL 2025 ─────────────────────────────────────
+  tofu:          { name:"Tofu nature",          cal:147,p:13.4,c:2.9,f:8.5, emoji:"🫘", fiber:0,  iron:2.4, vitC:0,  calcium:100,magnesium:100, omega3:0.55},
+  lait_avoine:   { name:"Lait d'avoine",        cal:41, p:0.2,c:7.8,f:1.1, emoji:"🥛", fiber:0,  iron:0.02,vitC:0,  calcium:1,  magnesium:2,   omega3:0   },
+  lentille_corail:{ name:"Lentilles corail",    cal:123,p:10.6,c:15,f:0.5, emoji:"🫘", fiber:8.2,iron:2.2, vitC:0,  calcium:21, magnesium:25,  omega3:0.06},
+  potiron:       { name:"Potiron",              cal:20, p:1.1,c:3.5,f:0.1, emoji:"🎃", fiber:0.5,iron:0.85,vitC:11, calcium:20, magnesium:12,  omega3:0   },
+  kale:          { name:"Chou kale",            cal:35, p:2.9,c:0.3,f:1.5, emoji:"🥬", fiber:4.1,iron:1.6, vitC:93, calcium:254,magnesium:33,  omega3:0   },
+  pois_casses:   { name:"Pois cassés",          cal:129,p:8.6,c:16.3,f:1.5,emoji:"🫘", fiber:8,  iron:2.09,vitC:1,  calcium:25, magnesium:21,  omega3:0   },
+  butternut:     { name:"Courge butternut",     cal:30, p:1,  c:5.4,f:0.1, emoji:"🎃", fiber:2,  iron:0.7, vitC:21, calcium:48, magnesium:34,  omega3:0   },
+  sirop_agave:   { name:"Sirop d'agave",        cal:310,p:0.1,c:78, f:0,   emoji:"🍯", fiber:0,  iron:0,   vitC:0,  calcium:0,  magnesium:0,   omega3:0   },
+  edamame:       { name:"Edamame (haricot mungo)",cal:96,p:7.5,c:11.9,f:0.6,emoji:"🫘",fiber:6.4,iron:1.75,vitC:1,  calcium:53, magnesium:63,  omega3:0   },
+  fromage_frais: { name:"Fromage frais 0%",     cal:56, p:9.9,c:4.2,f:0.1, emoji:"🧀", fiber:0,  iron:0,   vitC:0,  calcium:127,magnesium:11,  omega3:0   },
 };
 
 // ─── TEMPLATES ────────────────────────────────────────────────────────────────
@@ -634,6 +645,15 @@ export default function FitWomenApp(){
   // ── Historique 7 jours ──
   const [dailyHistory,setDailyHistory]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_history")||"[]");}catch{return[];}});
 
+
+  // ── Recettes personnalisées ──
+  const [customRecipes,setCustomRecipes]=useState(()=>{try{return JSON.parse(localStorage.getItem("fw_custom_recipes")||"[]");}catch{return[];}});
+  const [showCustomCreator,setShowCustomCreator]=useState(false);
+  const [crName,setCrName]=useState("");
+  const [crGoal,setCrGoal]=useState("seche");
+  const [crMeal,setCrMeal]=useState("Déjeuner");
+  const [crIngredients,setCrIngredients]=useState({});
+  const [crSearch,setCrSearch]=useState("");
   // ── Animations swipe ──
   const [swipeAnim,setSwipeAnim]=useState(null); // 'left'|'right'|null
   // ── Timers cuisson ──
@@ -660,6 +680,7 @@ export default function FitWomenApp(){
   useEffect(()=>{if(profile.done)localStorage.setItem("fw_profile",JSON.stringify(profile));},[profile]);
   useEffect(()=>{localStorage.setItem("fw_dark",darkMode?"1":"0");},[darkMode]);
   useEffect(()=>{localStorage.setItem("fw_history",JSON.stringify(dailyHistory));},[dailyHistory]);
+  useEffect(()=>{localStorage.setItem("fw_custom_recipes",JSON.stringify(customRecipes));},[customRecipes]);
 
   // Sync objectif calorique avec le profil
   useEffect(()=>{if(profile.calTarget)setDailyGoalKcal(profile.calTarget);},[profile.calTarget]);
@@ -697,7 +718,8 @@ export default function FitWomenApp(){
 
   // ── Filtrage + Tri ──
   const filtered=useMemo(()=>{
-    let list=ALL_RECIPES.filter(r=>
+    const allRecipes=[...ALL_RECIPES,...customRecipes.map(r=>({...r,isCustom:true}))];
+    let list=allRecipes.filter(r=>
       r.goal===activeGoal&&
       (activeMeal==="Tous"||r.meal===activeMeal)&&
       (search===""||r.name.toLowerCase().includes(search.toLowerCase()))&&
@@ -708,7 +730,7 @@ export default function FitWomenApp(){
     else if(sortBy==="cal_desc")list=[...list].sort((a,b)=>computeMacros(b.ingredients).cal-computeMacros(a.ingredients).cal);
     else if(sortBy==="prot_desc")list=[...list].sort((a,b)=>computeMacros(b.ingredients).p-computeMacros(a.ingredients).p);
     return list;
-  },[activeGoal,activeMeal,search,showFavsOnly,favorites,activeTagFilter,sortBy]);
+  },[activeGoal,activeMeal,search,showFavsOnly,favorites,activeTagFilter,sortBy,customRecipes]);
 
   const paginated=useMemo(()=>filtered.slice(0,page*PER_PAGE),[filtered,page]);
   const mealCounts=useMemo(()=>{const c={};ALL_RECIPES.filter(r=>r.goal===activeGoal).forEach(r=>{c[r.meal]=(c[r.meal]||0)+1;});return c;},[activeGoal]);
@@ -2045,12 +2067,153 @@ export default function FitWomenApp(){
         </div>
       )}
 
+
+      {/* ── PANNEAU RECETTE PERSONNALISÉE ── */}
+      {showCustomCreator&&(
+        <div style={{position:"fixed",inset:0,zIndex:300,background:T.pageBg,overflowY:"auto",paddingBottom:90}}>
+          <div style={{background:DARK,padding:"16px 20px",position:"sticky",top:0,zIndex:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <button onClick={()=>setShowCustomCreator(false)}
+                style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,width:34,height:34,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",flexShrink:0}}>‹</button>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff",flex:1}}>✏️ Ma recette</div>
+              {customRecipes.length>0&&<span style={{fontSize:11,color:ROSE,fontWeight:700}}>{customRecipes.length} recette{customRecipes.length>1?"s":""}</span>}
+            </div>
+          </div>
+          <div style={{maxWidth:520,margin:"0 auto",padding:"16px 16px"}}>
+
+            {/* Mes recettes sauvegardées */}
+            {customRecipes.length>0&&(
+              <div style={{marginBottom:20}}>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,fontWeight:700,marginBottom:10,color:T.text}}>Mes recettes sauvegardées</div>
+                {customRecipes.map(r=>{
+                  const m=computeMacros(r.ingredients);
+                  return(
+                    <div key={r.id} style={{background:T.card,border:`1px solid ${ROSE}44`,borderRadius:14,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:20}}>{r.emoji||"🍽️"}</span>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontWeight:700,fontSize:13,color:T.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.name}</div>
+                        <div style={{fontSize:10,color:T.textM,marginTop:2}}>{m.cal} kcal · P{m.p}g · G{m.c}g · L{m.f}g · {GOALS[r.goal]?.label} · {r.meal}</div>
+                      </div>
+                      <button onClick={()=>{setCustomRecipes(prev=>prev.filter(x=>x.id!==r.id));}} style={{background:"rgba(255,80,80,0.15)",border:"none",borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:14,color:"#f08080",flexShrink:0}}>✕</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Formulaire création */}
+            <div style={{background:T.card,borderRadius:16,padding:"16px",border:`1px solid ${T.border}`}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:700,marginBottom:14,color:T.text}}>Créer une nouvelle recette</div>
+
+              {/* Nom */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:10,fontWeight:700,color:ROSE,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5}}>Nom de la recette *</div>
+                <input value={crName} onChange={e=>setCrName(e.target.value)} placeholder="Ex: Mon smoothie post-training..."
+                  style={{width:"100%",background:T.cardAlt,border:`1px solid ${T.border}`,borderRadius:10,padding:"9px 12px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box"}}/>
+              </div>
+
+              {/* Objectif + Repas */}
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,fontWeight:700,color:ROSE,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5}}>Objectif</div>
+                  <select value={crGoal} onChange={e=>setCrGoal(e.target.value)}
+                    style={{width:"100%",background:T.cardAlt,border:`1px solid ${T.border}`,borderRadius:10,padding:"9px 10px",fontSize:12,color:T.text,outline:"none"}}>
+                    {Object.entries(GOALS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,fontWeight:700,color:ROSE,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5}}>Repas</div>
+                  <select value={crMeal} onChange={e=>setCrMeal(e.target.value)}
+                    style={{width:"100%",background:T.cardAlt,border:`1px solid ${T.border}`,borderRadius:10,padding:"9px 10px",fontSize:12,color:T.text,outline:"none"}}>
+                    {["Petit-déjeuner","Déjeuner","Dîner","Collation"].map(m=><option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Recherche aliment */}
+              <div style={{marginBottom:8}}>
+                <div style={{fontSize:10,fontWeight:700,color:ROSE,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5}}>Ajouter des aliments</div>
+                <input value={crSearch} onChange={e=>setCrSearch(e.target.value)} placeholder="🔍 Rechercher un aliment..."
+                  style={{width:"100%",background:T.cardAlt,border:`1px solid ${T.border}`,borderRadius:10,padding:"9px 12px",fontSize:13,color:T.text,outline:"none",boxSizing:"border-box"}}/>
+              </div>
+
+              {/* Liste aliments filtrés */}
+              {crSearch.length>0&&(()=>{
+                const matches=Object.entries(FOODS).filter(([k,v])=>v.name.toLowerCase().includes(crSearch.toLowerCase())&&!crIngredients[k]).slice(0,8);
+                return matches.length>0?(
+                  <div style={{background:T.cardAlt,borderRadius:10,border:`1px solid ${T.border}`,marginBottom:12,maxHeight:200,overflowY:"auto"}}>
+                    {matches.map(([k,food])=>(
+                      <button key={k} onClick={()=>{setCrIngredients(prev=>({...prev,[k]:100}));setCrSearch("");}}
+                        style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:"none",border:"none",borderBottom:`1px solid ${T.borderLL}`,cursor:"pointer",textAlign:"left"}}>
+                        <span style={{fontSize:16}}>{food.emoji}</span>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:12,fontWeight:600,color:T.text}}>{food.name}</div>
+                          <div style={{fontSize:10,color:T.textM}}>{food.cal} kcal · P{food.p}g · G{food.c}g · L{food.f}g /100g</div>
+                        </div>
+                        <span style={{fontSize:14,color:ROSE}}>+</span>
+                      </button>
+                    ))}
+                  </div>
+                ):crSearch.length>1?<div style={{fontSize:12,color:T.textM,padding:"8px 0",marginBottom:8}}>Aucun aliment trouvé pour "{crSearch}"</div>:null;
+              })()}
+
+              {/* Ingrédients sélectionnés */}
+              {Object.keys(crIngredients).length>0&&(
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:10,fontWeight:700,color:T.textM,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Ingrédients ({Object.keys(crIngredients).length})</div>
+                  {Object.entries(crIngredients).map(([k,g])=>{
+                    const food=FOODS[k];if(!food)return null;
+                    return(
+                      <div key={k} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:`1px solid ${T.borderLL}`}}>
+                        <span style={{fontSize:15}}>{food.emoji}</span>
+                        <div style={{flex:1,fontSize:12,color:T.text,fontWeight:600}}>{food.name}</div>
+                        <input type="number" min="1" max="2000" value={g}
+                          onChange={e=>setCrIngredients(prev=>({...prev,[k]:Math.max(1,parseInt(e.target.value)||1)}))}
+                          style={{width:58,background:T.cardAlt,border:`1px solid ${T.border}`,borderRadius:7,padding:"4px 6px",fontSize:12,color:T.text,textAlign:"center",outline:"none"}}/>
+                        <span style={{fontSize:11,color:T.textM}}>g</span>
+                        <button onClick={()=>setCrIngredients(prev=>{const n={...prev};delete n[k];return n;})}
+                          style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:"#f08080",padding:"0 2px"}}>✕</button>
+                      </div>
+                    );
+                  })}
+                  {/* Preview macros */}
+                  {(()=>{const m=computeMacros(crIngredients);return(
+                    <div style={{display:"flex",justifyContent:"space-around",background:T.cardAlt,borderRadius:10,padding:"10px",marginTop:10}}>
+                      {[["Cal",m.cal,"kcal",ROSE],["Prot",m.p,"g","#d4826a"],["Gluc",m.c,"g","#7a9e87"],["Lip",m.f,"g","#b08a6e"]].map(([l,v,u,c])=>(
+                        <div key={l} style={{textAlign:"center"}}>
+                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:c}}>{v}</div>
+                          <div style={{fontSize:9,color:T.textM,textTransform:"uppercase"}}>{l} {u}</div>
+                        </div>
+                      ))}
+                    </div>
+                  );})()}
+                </div>
+              )}
+
+              {/* Bouton Sauvegarder */}
+              <button
+                disabled={!crName.trim()||Object.keys(crIngredients).length<1}
+                onClick={()=>{
+                  const id="cr_"+Date.now();
+                  const newR={id,goal:crGoal,meal:crMeal,name:crName.trim(),emoji:"✏️",desc:"Recette personnalisée",steps:[],ingredients:crIngredients,isCustom:true};
+                  setCustomRecipes(prev=>[newR,...prev]);
+                  setCrName("");setCrIngredients({});setCrSearch("");
+                }}
+                style={{width:"100%",padding:"12px",background:(!crName.trim()||Object.keys(crIngredients).length<1)?"rgba(201,168,130,0.2)":`linear-gradient(135deg,${ROSE},#b8896a)`,border:"none",borderRadius:12,fontSize:14,fontWeight:700,color:(!crName.trim()||Object.keys(crIngredients).length<1)?ROSE:"#fff",cursor:(!crName.trim()||Object.keys(crIngredients).length<1)?"not-allowed":"pointer",transition:"all 0.2s"}}>
+                ✅ Sauvegarder la recette
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── BOTTOM NAVIGATION BAR (mobile only) ── */}
       {isMobile&&(
         <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:250,background:darkMode?"#000":DARK,borderTop:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 -4px 20px rgba(0,0,0,0.3)",paddingBottom:"env(safe-area-inset-bottom)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
           <div style={{display:"flex",alignItems:"stretch",height:58}}>
             {[
-              {icon:"🏠", label:"Recettes",  action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(false);}, active:!showWeek&&!showCart&&!showDailyPanel&&!showProfile&&!showCoaching},
+              {icon:"🏠", label:"Recettes",  action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(false);setShowCustomCreator(false);}, active:!showWeek&&!showCart&&!showDailyPanel&&!showProfile&&!showCoaching&&!showCustomCreator},
+              {icon:"✏️", label:"Ma recette", action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(false);setShowCustomCreator(true);setCrName("");setCrIngredients({});setCrSearch("");}, active:showCustomCreator, badge:customRecipes.length>0?<div style={{position:"absolute",top:6,right:"50%",transform:"translateX(calc(50% + 8px))",width:14,height:14,borderRadius:"50%",background:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:"#fff"}}>{customRecipes.length}</div>:null},
               {icon:"📆", label:"Semainier", action:()=>setShowWeek(true),  active:showWeek,  badge:null},
               {icon:"📅", label:"Journal",   action:()=>setShowDailyPanel(true), active:showDailyPanel,
                 badge:dailyCal>0?<div style={{position:"absolute",top:6,right:"50%",transform:"translateX(calc(50% + 8px))",background:dailyPct>100?"#f08080":"#80d080",borderRadius:99,padding:"1px 5px",fontSize:7,fontWeight:800,color:"#fff",lineHeight:1.4}}>{dailyPct}%</div>:null},
