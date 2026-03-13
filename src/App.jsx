@@ -1182,6 +1182,12 @@ export default function FitWomenApp(){
               style={{background:"rgba(255,255,255,0.08)",border:`1.5px solid ${ROSE}66`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               👤
             </button>
+            {/* Ma recette - masqué mobile (bottom nav) */}
+            <button onClick={()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(false);setShowCustomCreator(v=>!v);setCrName("");setCrIngredients({});setCrSearch("");}} title="Ma recette personnalisée" className="header-icon-hide"
+              style={{position:"relative",background:showCustomCreator?`${ROSE}33`:"rgba(255,255,255,0.08)",border:`1.5px solid ${showCustomCreator?ROSE:ROSE+"44"}`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              ✏️
+              {customRecipes.length>0&&<div style={{position:"absolute",top:-5,right:-5,width:17,height:17,borderRadius:"50%",background:ROSE,color:"#fff",fontSize:9,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center"}}>{customRecipes.length}</div>}
+            </button>
           </div>
         </div>
       </div>
