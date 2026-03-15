@@ -349,6 +349,175 @@ const TEMPLATES = {
   },
 };
 
+
+// ─── TEMPLATES SUPPLÉMENTAIRES ────────────────────────────────────────────────
+const EXTRA_TEMPLATES = {
+  seche: {
+    "Petit-déjeuner": [
+      { name:"Overnight oats {protein} & {fruit}", emoji:"🌙",
+        proteins:["skyr","yaourt_grec","fromage_blanc","cottage"], carbs:["avoine"], fruits:["myrtilles","fraises","pomme","mangue","banane"], fats:["graines_chia"], veggies:[],
+        qty:{protein:180,carb:60,fruit:100,fat:10},
+        desc:(p,c,fr)=>`Le petit-déjeuner préparé la veille. Le ${FOODS[p]?.name} mélangé à chaud aux flocons d'avoine crée une texture crémeuse unique. Les ${FOODS[fr]?.name} apportent les antioxydants du matin.`,
+        steps:["Mélanger le ${FOODS[p]?.name} avec les flocons d'avoine","Ajouter 150ml de lait d'avoine ou eau","Incorporer les graines de chia","Fermer le pot et réfrigérer toute la nuit","Le matin : ajouter les ${FOODS[fr]?.name} frais","Optionnel : filet de miel, cannelle"] },
+      { name:"Pancakes protéinés {protein}", emoji:"🥞",
+        proteins:["blanc_oeuf","oeuf","fromage_blanc","skyr"], carbs:["avoine","banane"], fruits:["fraises","myrtilles","banane"], fats:[], veggies:[],
+        qty:{protein:150,carb:80,fruit:80},
+        desc:(p,c,fr)=>`Pancakes fitness qui ressemblent aux vrais. La ${FOODS[p]?.name} remplace le beurre et la farine blanche. La ${FOODS[fr]?.name} apporte le sucre naturel et lie la pâte.`,
+        steps:["Mixer ${FOODS[c]?.name} + ${FOODS[p]?.name} + 1 pincée de levure","Laisser reposer 5 min","Cuire à feu moyen dans une poêle antiadhésive sans matière grasse","1-2 min par face, les bords doivent sécher avant de retourner","Garnir de ${FOODS[fr]?.name} frais","Optionnel : filet de sirop d'érable light ou yaourt"] },
+      { name:"Smoothie bowl {protein} & {fruit}", emoji:"🫙",
+        proteins:["skyr","yaourt_grec","fromage_blanc"], carbs:[], fruits:["myrtilles","mangue","banane","fraises"], fats:["graines_chia"], veggies:["epinards"],
+        qty:{protein:200,fruit:120,fat:10,veggie:30},
+        desc:(p,_,fr)=>`Plus épais qu'un smoothie, plus nourrissant qu'un bol de yaourt. La ${FOODS[p]?.name} + les épinards (qui ne se sentent pas !) créent une base ultra-protéinée.`,
+        steps:["Mixer ${FOODS[p]?.name} + épinards + ${FOODS[fr]?.name} surgelés","La texture doit être épaisse — moins de liquide que le smoothie classique","Verser dans un bol","Garnir de graines de chia, quelques ${FOODS[fr]?.name} frais","Déguster immédiatement avec une cuillère"] },
+    ],
+    "Déjeuner": [
+      { name:"Buddha bowl {protein} & {carb}", emoji:"🫙",
+        proteins:["poulet","saumon","thon","crevettes","tofu"], carbs:["quinoa","riz_complet","lentilles","patate_douce"], fruits:[], fats:["avocat","tahini","huile_olive"], veggies:["brocoli","carotte","epinards","concombre","poivron"],
+        qty:{protein:180,carb:130,fat:25,veggie:120},
+        desc:(p,c,_,v,fat)=>`Le bowl le plus complet du déjeuner. ${FOODS[c]?.name} en base, ${FOODS[p]?.name} protéiné, légumes colorés et ${FOODS[fat]?.name} pour les oméga. Sauce tahini-citron incontournable.`,
+        steps:["Cuire le ${FOODS[c]?.name} (peut se préparer en batch dimanche)","Rôtir les légumes au four 20 min à 200°C avec huile d'olive","Cuire ou réchauffer le ${FOODS[p]?.name}","Assembler dans un grand bol : base de céréale + légumes + protéine","Préparer la sauce : tahini + citron + eau + ail","Napper et servir avec graines de sésame"] },
+      { name:"Soupe detox {veggie} & {protein}", emoji:"🍜",
+        proteins:["poulet","fromage_blanc","skyr"], carbs:["lentille_corail","pois_casses"], fruits:[], fats:["huile_olive"], veggies:["potiron","butternut","brocoli","courgette","epinards","carotte"],
+        qty:{protein:150,carb:100,fat:10,veggie:200},
+        desc:(p,c,_,v)=>`La soupe sèche par excellence. Le ${FOODS[c]?.name} fond à la cuisson et épaissit naturellement. Les ${FOODS[v]?.name} apportent fibres et vitamines pour rassasier avec peu de calories.`,
+        steps:["Faire revenir oignon + ail dans un filet d'huile d'olive","Ajouter les ${FOODS[v]?.name} coupés en dés","Verser 800ml de bouillon de légumes","Ajouter le ${FOODS[c]?.name}","Cuire 20 min à feu moyen","Mixer finement","Ajouter le ${FOODS[p]?.name} hors du feu et mélanger","Assaisonner avec curcuma, cumin, poivre"] },
+      { name:"Tartare de {protein} & {veggie}", emoji:"🥑",
+        proteins:["saumon","thon","cabillaud"], carbs:[], fruits:[], fats:["avocat","huile_olive"], veggies:["concombre","tomate","poivron","salade"],
+        qty:{protein:200,fat:60,veggie:150},
+        desc:(p,_,__,v,fat)=>`Le repas zéro-cuisson pour les journées chargées. Le ${FOODS[p]?.name} cru (sashimi grade) avec ${FOODS[fat]?.name} crémeux. Riche en oméga-3 et graisses saines.`,
+        steps:["Couper le ${FOODS[p]?.name} en petits dés réguliers","Couper l'${FOODS[fat]?.name} en dés similaires","Couper les ${FOODS[v]?.name} finement","Mélanger avec jus de citron, ciboulette, sel","Assaisonner avec sauce soja légère","Dresser dans un cercle de présentation","Servir immédiatement bien frais"] },
+    ],
+    "Dîner": [
+      { name:"Curry léger {protein} & {veggie}", emoji:"🍛",
+        proteins:["poulet","dinde","crevettes","tofu","cabillaud"], carbs:["riz_complet","lentille_corail"], fruits:[], fats:["huile_olive"], veggies:["courgette","epinards","poivron","champignon","potiron"],
+        qty:{protein:180,carb:100,fat:10,veggie:200},
+        desc:(p,c,_,v)=>`Le curry sèche : saveurs exotiques sans les calories. Les ${FOODS[v]?.name} absorbent les épices et créent un plat généreux. Le ${FOODS[p]?.name} apporte les protéines pour la nuit.`,
+        steps:["Faire revenir oignon + ail + gingembre râpé","Ajouter 1 CS de curry, curcuma, cumin","Ajouter les ${FOODS[v]?.name} coupés","Verser 200ml de bouillon de légumes (pas de lait de coco en sèche)","Cuire le ${FOODS[p]?.name} séparément et ajouter","Incorporer les ${FOODS[c]?.name} déjà cuites","Cuire 10 min à feu doux, assaisonner","Garnir de coriandre fraîche et citron vert"] },
+      { name:"Velouté {veggie} & {protein}", emoji:"🥣",
+        proteins:["cottage","fromage_blanc","skyr","cabillaud"], carbs:["lentille_corail","pois_casses"], fruits:[], fats:["huile_olive"], veggies:["butternut","potiron","brocoli","courgette","carotte","epinards"],
+        qty:{protein:150,carb:80,fat:10,veggie:300},
+        desc:(p,c,_,v)=>`Le dîner parfait pour récupérer. La ${FOODS[v]?.name} mixée crée une texture veloutée naturellement. Le ${FOODS[p]?.name} apporte les acides aminés pour la réparation musculaire nocturne.`,
+        steps:["Cuire la ${FOODS[v]?.name} dans le bouillon 15 min","Ajouter le ${FOODS[c]?.name} et cuire encore 5 min","Mixer finement jusqu'à texture lisse","Incorporer le ${FOODS[p]?.name} hors du feu","Assaisonner avec muscade, sel, poivre blanc","Optionnel : graines de courge en garniture","Servir chaud avec une tranche de pain complet"] },
+    ],
+    "Collation": [
+      { name:"Pudding chia {protein} & {fruit}", emoji:"🫙",
+        proteins:["lait_avoine","yaourt_grec","skyr","fromage_blanc"], carbs:[], fruits:["myrtilles","fraises","mangue","banane"], fats:["graines_chia"], veggies:[],
+        qty:{protein:180,fruit:80,fat:25},
+        desc:(p,_,fr)=>`La collation préparée à l'avance. Les graines de chia gonflent dans le ${FOODS[p]?.name} et créent une texture pudding crémeuse. Les ${FOODS[fr]?.name} ajoutent les vitamines.`,
+        steps:["Mélanger ${FOODS[p]?.name} + graines de chia + vanille","Bien fouetter pour éviter les grumeaux","Réfrigérer 4h minimum (idéalement une nuit)","Remuer à mi-repos si possible","Au moment de servir, ajouter les ${FOODS[fr]?.name}","Dure 3 jours au frigo dans un pot fermé"] },
+      { name:"Edamame épicés", emoji:"🫘",
+        proteins:["edamame"], carbs:[], fruits:[], fats:["huile_olive"], veggies:[],
+        qty:{protein:200,fat:5},
+        desc:()=>`La collation japonaise des athlètes. Les edamame sont l'une des rares sources végétales de protéines complètes. Croustillants, rassasiants, et prêts en 5 minutes.`,
+        steps:["Cuire les edamame 5 min à l'eau bouillante salée","Égoutter et sécher","Mélanger avec huile d'olive + sel de mer + piment","Optionnel : zeste de citron vert","Servir chaud ou froid","Se prépare à l'avance et se conserve 2 jours"] },
+    ],
+  },
+  maintien: {
+    "Petit-déjeuner": [
+      { name:"French toast {protein} & {fruit}", emoji:"🍞",
+        proteins:["oeuf","blanc_oeuf"], carbs:["pain_complet","pain_seigle"], fruits:["banane","fraises","myrtilles","mangue"], fats:["huile_olive"], veggies:[],
+        qty:{protein:3,carb:80,fruit:100,fat:8},
+        desc:(p,c,fr)=>`Le French toast healthy. Le ${FOODS[p]?.name} battu imprègne le ${FOODS[c]?.name} grillé d'une couche protéinée. Avec les ${FOODS[fr]?.name} frais, c'est le petit-déjeuner gourmand sans culpabilité.`,
+        steps:["Battre les ${FOODS[p]?.name} avec lait d'avoine + vanille + cannelle","Tremper les tranches de ${FOODS[c]?.name} 30 sec de chaque côté","Cuire à feu moyen dans une poêle légèrement huilée","2-3 min par face jusqu'à dorure","Servir avec les ${FOODS[fr]?.name} frais","Optionnel : filet de sirop d'agave et graines de chia"] },
+      { name:"Muesli maison {fruit} & {fat}", emoji:"🌾",
+        proteins:["yaourt_grec","skyr","lait_avoine"], carbs:["avoine"], fruits:["pomme","myrtilles","fraises","banane","mangue"], fats:["noix","amandes","graines_chia","tahini"], veggies:[],
+        qty:{protein:200,carb:70,fruit:100,fat:30},
+        desc:(p,c,fr,_,fat)=>`Le muesli maison infiniment meilleur que le commerce. ${FOODS[c]?.name} crus + ${FOODS[fat]?.name} + ${FOODS[fr]?.name} frais sur base de ${FOODS[p]?.name}. Fibres, bons gras, protéines — tout est là.`,
+        steps:["Verser le ${FOODS[p]?.name} dans un grand bol","Ajouter les ${FOODS[c]?.name} crus directement","Incorporer les ${FOODS[fat]?.name} concassés","Couper les ${FOODS[fr]?.name} en morceaux","Mélanger délicatement","Optionnel : cannelle + extrait de vanille","Déguster immédiatement ou après 5 min de repos"] },
+    ],
+    "Déjeuner": [
+      { name:"Poke bowl {protein} & {carb}", emoji:"🍱",
+        proteins:["saumon","thon","crevettes","tofu","cabillaud"], carbs:["riz","quinoa","riz_complet"], fruits:["mangue"], fats:["avocat","tahini","huile_olive"], veggies:["concombre","carotte","poivron","salade","edamame"],
+        qty:{protein:180,carb:150,fruit:60,fat:40,veggie:120},
+        desc:(p,c,fr,v,fat)=>`Le poke bowl hawaiien version fitness. Le ${FOODS[p]?.name} mariné au soja sur base de ${FOODS[c]?.name} avec mangue sucrée, ${FOODS[v]?.name} croquants et sauce sriracha-mayo légère.`,
+        steps:["Cuire le ${FOODS[c]?.name} et laisser tiédir","Mariner le ${FOODS[p]?.name} dans soja + sésame + gingembre 10 min","Préparer tous les toppings : ${FOODS[v]?.name} coupés, ${FOODS[fr]?.name} en dés, avocat en tranches","Assembler : riz en base, puis chaque topping en sections séparées","Verser la marinade restante","Garnir de graines de sésame et algues nori"] },
+      { name:"Bowl chaud {protein} & {veggie} rôti", emoji:"🫕",
+        proteins:["poulet","boeuf","saumon","tofu","lentilles"], carbs:["patate_douce","quinoa","pates","riz_complet"], fruits:[], fats:["huile_olive","avocat"], veggies:["brocoli","champignon","poivron","courgette","butternut","potiron"],
+        qty:{protein:180,carb:150,fat:20,veggie:200},
+        desc:(p,c,_,v,fat)=>`Le bowl hivernal réconfortant. Les ${FOODS[v]?.name} rôtis au four développent des saveurs caramélisées profondes. Le ${FOODS[p]?.name} et ${FOODS[c]?.name} font le repas le plus complet de la semaine.`,
+        steps:["Préchauffer le four à 200°C","Couper les ${FOODS[v]?.name} en morceaux, huiler, assaisonner, enfourner 25 min","Cuire le ${FOODS[c]?.name} séparément","Cuire le ${FOODS[p]?.name} à la poêle ou au four","Assembler dans un grand bol","Sauce : tahini + citron + ail + eau + herbes","Parsemer de graines de courge ou sésame"] },
+    ],
+    "Dîner": [
+      { name:"Pasta bowl {protein} & {veggie}", emoji:"🍝",
+        proteins:["poulet","saumon","crevettes","tofu","mozzarella"], carbs:["pates"], fruits:[], fats:["huile_olive","avocat"], veggies:["tomate","epinards","champignon","courgette","poivron"],
+        qty:{protein:180,carb:160,fat:15,veggie:150},
+        desc:(p,c,_,v)=>`Les pâtes complètes en maintien — pas un cheat meal, un repas équilibré. Le ${FOODS[p]?.name} apporte les protéines, les ${FOODS[v]?.name} les fibres. Sauce tomate maison ou pesto.`,
+        steps:["Cuire les ${FOODS[c]?.name} al dente (1 min de moins que le paquet)","Faire revenir les ${FOODS[v]?.name} dans l'huile d'olive","Ajouter tomates pelées ou coulis","Cuire le ${FOODS[p]?.name} séparément","Égoutter les pâtes en réservant l'eau de cuisson","Mélanger pâtes + sauce + ${FOODS[v]?.name}","Ajouter le ${FOODS[p]?.name} en dernier","Finir avec basilic frais et parmesan (modération)"] },
+      { name:"Risotto léger {protein} & {veggie}", emoji:"🍚",
+        proteins:["crevettes","poulet","fromage_blanc","mozzarella"], carbs:["riz"], fruits:[], fats:["huile_olive"], veggies:["champignon","epinards","courgette","asperges","potiron"],
+        qty:{protein:180,carb:180,fat:15,veggie:150},
+        desc:(p,c,_,v)=>`Le risotto allégé mais pas moins savoureux. Le riz basmati remplace le riz arborio sans perdre la texture. Les ${FOODS[v]?.name} créent un fond de saveur riche.`,
+        steps:["Faire revenir oignon + ail dans l'huile d'olive","Ajouter le riz et nacrer 2 min","Verser bouillon chaud louche par louche en mélangeant","Incorporer les ${FOODS[v]?.name} à mi-cuisson","Ajouter le ${FOODS[p]?.name} en fin de cuisson","Optionnel : 1 CS de fromage blanc à la place du parmesan","Mantecare hors du feu","Poivre noir, basilic, zeste de citron"] },
+    ],
+    "Collation": [
+      { name:"Nice cream {fruit}", emoji:"🍨",
+        proteins:["yaourt_grec","skyr","lait_avoine"], carbs:[], fruits:["banane","mangue","fraises","myrtilles"], fats:["graines_chia"], veggies:[],
+        qty:{protein:150,fruit:180,fat:10},
+        desc:(p,_,fr)=>`La glace fitness. Des bananes ou mangues congelées mixées = texture glace sans sucre ajouté ni crème. Le ${FOODS[p]?.name} en base pour les protéines. Bluffant de ressemblance.`,
+        steps:["Congeler les ${FOODS[fr]?.name} coupés en rondelles (minimum 4h)","Mixer les fruits congelés seuls d'abord","Ils vont d'abord se fragmenter puis se transformer en crème","Ajouter le ${FOODS[p]?.name} et remixer","Consommer immédiatement (texture soft serve)","Ou recongeler 30 min pour texture plus ferme"] },
+    ],
+  },
+  muscle: {
+    "Petit-déjeuner": [
+      { name:"Porridge masse {carb} & {protein}", emoji:"🔥",
+        proteins:["whey","yaourt_grec","skyr","oeuf"], carbs:["avoine","banane"], fruits:["banane","mangue","myrtilles","fraises"], fats:["beurre_cac","amandes","noix","graines_chia"], veggies:[],
+        qty:{protein:120,carb:100,fruit:80,fat:40},
+        desc:(p,c,fr,_,fat)=>`Le petit-déjeuner masse des champions. Les ${FOODS[c]?.name} + ${FOODS[fat]?.name} + ${FOODS[p]?.name} créent un repas hypercalorique et rassasiant. 600-700 kcal pour bien démarrer la journée.`,
+        steps:["Cuire les ${FOODS[c]?.name} dans 300ml de lait d'avoine 5 min","Pendant la cuisson, mélanger ${FOODS[p]?.name} à part","Incorporer ${FOODS[fat]?.name} hors du feu (fond et s'incorpore parfaitement)","Transvaser dans un bol","Garnir de ${FOODS[fr]?.name} et graines","Optionnel : cannelle + extrait de vanille + miel"] },
+      { name:"Omelette masse {protein} & {fat}", emoji:"🥚",
+        proteins:["oeuf","blanc_oeuf","ricotta","mozzarella"], carbs:["pain_complet","pain_seigle"], fruits:[], fats:["avocat","amandes","huile_olive"], veggies:["epinards","champignon","poivron","tomate","courgette"],
+        qty:{protein:200,carb:80,fat:40,veggie:100},
+        desc:(p,c,_,v,fat)=>`L'omelette masse : 3-4 œufs entiers + blancs pour maximiser les protéines. Le ${FOODS[fat]?.name} et le ${FOODS[c]?.name} augmentent les calories de qualité. Repas complet en 10 minutes.`,
+        steps:["Battre ${FOODS[p]?.name} avec sel, poivre, herbes","Faire revenir les ${FOODS[v]?.name} dans l'huile d'olive","Verser les oeufs sur les légumes","Cuire à feu moyen en pli-pliant ou flat","Griller le ${FOODS[c]?.name}","Garnir l'omelette de ${FOODS[fat]?.name} en dés","Servir sur ou avec le pain"] },
+    ],
+    "Déjeuner": [
+      { name:"Bol masse {protein} & {carb} & {fat}", emoji:"💪",
+        proteins:["boeuf","poulet","saumon","dinde","tofu"], carbs:["riz","patate_douce","pates","quinoa"], fruits:[], fats:["avocat","huile_olive","tahini","noix","beurre_cac"], veggies:["brocoli","epinards","champignon","poivron","courgette","carotte"],
+        qty:{protein:220,carb:200,fat:40,veggie:150},
+        desc:(p,c,_,v,fat)=>`Le meal prep masse par excellence. 700-800 kcal, macro-équilibré. ${FOODS[p]?.name} + ${FOODS[c]?.name} + ${FOODS[fat]?.name} : la trinité de la prise de masse propre.`,
+        steps:["Cuire ${FOODS[c]?.name} en grande quantité (meal prep)","Cuire le ${FOODS[p]?.name} à la poêle ou au four","Préparer les ${FOODS[v]?.name} vapeur ou sautés","Assembler dans un grand bol : céréale, légumes, protéine","Ajouter le ${FOODS[fat]?.name}","Sauce : huile olive + citron + ail + herbes","Parsemer de graines de sésame"] },
+      { name:"Wrap masse {protein} & {carb} & {fat}", emoji:"🌯",
+        proteins:["poulet","dinde","boeuf","saumon","thon"], carbs:["pain_complet","pain_seigle"], fruits:[], fats:["avocat","beurre_cac","tahini","huile_olive"], veggies:["salade","tomate","concombre","poivron","epinards","carotte"],
+        qty:{protein:200,carb:120,fat:35,veggie:120},
+        desc:(p,c,_,v,fat)=>`Le wrap masse à emporter. Double portion de ${FOODS[p]?.name} dans un grand ${FOODS[c]?.name} + ${FOODS[fat]?.name} crémeux. Facile à préparer le matin, parfait pour les repas hors domicile.`,
+        steps:["Chauffer légèrement le ${FOODS[c]?.name} pour le rendre souple","Étaler ${FOODS[fat]?.name} sur toute la surface","Poser la salade en base","Ajouter le ${FOODS[p]?.name} préalablement cuisiné","Disposer les ${FOODS[v]?.name} coupés","Rouler très serré en compressant","Couper en deux en biais","Emballer dans du papier alu pour le transport"] },
+    ],
+    "Dîner": [
+      { name:"Wok asiatique {protein} & {carb}", emoji:"🥢",
+        proteins:["boeuf","poulet","crevettes","saumon","tofu"], carbs:["riz","pates","quinoa","patate_douce"], fruits:[], fats:["huile_olive","noix"], veggies:["brocoli","champignon","poivron","carotte","courgette","epinards","edamame"],
+        qty:{protein:220,carb:180,fat:20,veggie:200},
+        desc:(p,c,_,v)=>`Le wok masse plein de saveurs. La technique haute température caramélise et intensifie les saveurs du ${FOODS[p]?.name}. Résultat : un dîner de restaurant à la maison avec les macros d'un athlète.`,
+        steps:["Cuire le ${FOODS[c]?.name} et réserver","Chauffer le wok à feu TRÈS vif (c'est le secret)","Saisir le ${FOODS[p]?.name} 2-3 min en ne touchant pas","Retirer et réserver","Wok-fry les légumes les plus durs 2 min","Ajouter les plus tendres, puis les épinards","Remettre la protéine et le riz","Sauce finale : soja + mirin + huile de sésame + gingembre","Décorer avec graines de sésame et ciboulette"] },
+      { name:"Casserole {protein} & {carb} & {veggie}", emoji:"🫕",
+        proteins:["poulet","boeuf","dinde","lentilles","pois_casses"], carbs:["patate_douce","pois_chiches","haricots","lentilles"], fruits:[], fats:["huile_olive"], veggies:["tomate","poivron","champignon","courgette","potiron","butternut"],
+        qty:{protein:220,carb:180,fat:15,veggie:200},
+        desc:(p,c,_,v)=>`Le one-pot mass gainer. Tout dans une seule casserole, mijoté lentement. Le ${FOODS[p]?.name} + ${FOODS[c]?.name} + ${FOODS[v]?.name} mijotés ensemble créent des saveurs que les recettes rapides n'atteignent jamais.`,
+        steps:["Faire revenir oignon + ail dans l'huile d'olive","Saisir le ${FOODS[p]?.name} sur toutes les faces","Ajouter les ${FOODS[v]?.name} coupés en gros morceaux","Incorporer le ${FOODS[c]?.name}","Couvrir de bouillon de légumes","Ajouter épices : cumin + paprika + thym + laurier","Mijoter 30-40 min à feu doux","Vérifier l'assaisonnement et ajuster","Servir directement dans la casserole"] },
+    ],
+    "Collation": [
+      { name:"Shake masse {protein} & {fat} & {fruit}", emoji:"💪",
+        proteins:["whey","yaourt_grec","skyr","lait_avoine"], carbs:["avoine","banane"], fruits:["banane","mangue","myrtilles","fraises"], fats:["beurre_cac","amandes","noix","graines_chia"], veggies:[],
+        qty:{protein:150,carb:120,fruit:100,fat:50},
+        desc:(p,c,fr,_,fat)=>`Le gainer naturel. ${FOODS[p]?.name} + avoine + ${FOODS[fr]?.name} + ${FOODS[fat]?.name} = 500-600 kcal liquides. Parfait post-training ou entre deux repas insuffisants.`,
+        steps:["Verser 300ml de lait d'avoine dans le blender","Ajouter la ${FOODS[p]?.name} ou yaourt","Incorporer les ${FOODS[c]?.name} (épaissit et nourrit)","Ajouter les ${FOODS[fr]?.name} et le ${FOODS[fat]?.name}","Mixer 1 min jusqu'à texture épaisse et onctueuse","Goûter et ajuster avec miel ou cacao","Boire dans les 30 min après l'entraînement"] },
+      { name:"Toast masse {fat} & {protein}", emoji:"🥜",
+        proteins:["fromage_blanc","ricotta","mozzarella","oeuf"], carbs:["pain_complet","pain_seigle","banane"], fruits:["banane","fraises","mangue","myrtilles"], fats:["beurre_cac","tahini","avocat","amandes"], veggies:[],
+        qty:{protein:150,carb:100,fruit:80,fat:40},
+        desc:(p,c,fr,_,fat)=>`La collation masse portable. Le ${FOODS[fat]?.name} étalé épais sur le ${FOODS[c]?.name} grillé + ${FOODS[fr]?.name} + ${FOODS[p]?.name} en dip. 400-500 kcal en 5 minutes sans cuisson complexe.`,
+        steps:["Griller généreusement le ${FOODS[c]?.name}","Étaler une couche épaisse de ${FOODS[fat]?.name}","Trancher les ${FOODS[fr]?.name} en rondelles fines","Disposer les fruits sur le toast","Accompagner d'un bol de ${FOODS[p]?.name}","Optionnel : miel + graines de chia + cannelle","Parfait en collation pre ou post workout"] },
+    ],
+  },
+};
+
+// Fusionner EXTRA_TEMPLATES dans TEMPLATES
+Object.entries(EXTRA_TEMPLATES).forEach(([goal,meals])=>{
+  Object.entries(meals).forEach(([meal,tpls])=>{
+    if(!TEMPLATES[goal])TEMPLATES[goal]={};
+    if(!TEMPLATES[goal][meal])TEMPLATES[goal][meal]=[];
+    TEMPLATES[goal][meal].push(...tpls);
+  });
+});
+
 // ─── Fonctions core ───────────────────────────────────────────────────────────
 function computeMacros(ingredients) {
   let cal=0,p=0,c=0,f=0;
@@ -585,6 +754,7 @@ export default function FitWomenApp(){
   const [page,setPage]=useState(1);
   const [activeTab,setActiveTab]=useState("recette");
   const [showCoaching,setShowCoaching]=useState(false);
+  const [showLegal,setShowLegal]=useState(false);
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<768);
   const [isLoading,setIsLoading]=useState(false);
   const loadingTimer=useRef(null);
@@ -2069,6 +2239,12 @@ export default function FitWomenApp(){
                 <div key={txt} style={{fontSize:13,color:T.text,marginBottom:8,lineHeight:1.5}}>{txt}</div>
               ))}
             </div>
+            <div style={{textAlign:"center",marginTop:24,paddingBottom:4}}>
+              <button onClick={()=>{setShowCoaching(false);setShowLegal(true);}}
+                style={{background:"none",border:"none",cursor:"pointer",fontSize:11,color:"rgba(255,255,255,0.3)",textDecoration:"underline"}}>
+                ⚖️ Mentions légales & Confidentialité
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2213,6 +2389,68 @@ export default function FitWomenApp(){
         </div>
       )}
 
+
+      {/* ── MENTIONS LÉGALES ── */}
+      {showLegal&&(
+        <div style={{position:"fixed",inset:0,zIndex:400,background:T.pageBg,overflowY:"auto",paddingBottom:80}}>
+          <div style={{background:DARK,padding:"16px 20px",position:"sticky",top:0,zIndex:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <button onClick={()=>setShowLegal(false)}
+                style={{background:"rgba(255,255,255,0.08)",border:"none",borderRadius:8,width:34,height:34,cursor:"pointer",fontSize:18,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>‹</button>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:700,color:"#fff"}}>⚖️ Informations légales</div>
+            </div>
+          </div>
+          <div style={{maxWidth:640,margin:"0 auto",padding:"20px 18px",fontSize:13,lineHeight:1.75,color:T.text}}>
+
+            {/* Mentions légales */}
+            <div style={{background:T.card,borderRadius:16,padding:"18px 20px",marginBottom:16,border:`1px solid ${T.border}`}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE,marginBottom:12}}>Mentions légales</div>
+              <p style={{margin:"0 0 8px 0"}}><strong>Éditeur du site</strong><br/>Antoine Da Costa<br/>Auto-entrepreneur — Coaching sportif et nutrition<br/>SIRET : 814 915 070 00000<br/>Email : <a href="mailto:contact@antoinecoaching.com" style={{color:ROSE}}>contact@antoinecoaching.com</a></p>
+              <p style={{margin:"0 0 8px 0"}}><strong>Hébergement</strong><br/>Vercel Inc.<br/>340 Pine Street, Suite 701<br/>San Francisco, CA 94104, USA<br/><a href="https://vercel.com" target="_blank" rel="noopener" style={{color:ROSE}}>vercel.com</a></p>
+              <p style={{margin:0}}><strong>Directeur de la publication</strong><br/>Antoine Da Costa</p>
+            </div>
+
+            {/* Politique de confidentialité */}
+            <div style={{background:T.card,borderRadius:16,padding:"18px 20px",marginBottom:16,border:`1px solid ${T.border}`}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE,marginBottom:12}}>Politique de confidentialité</div>
+              <p style={{margin:"0 0 10px 0"}}><strong>Données collectées</strong><br/>
+              Cette application collecte et stocke localement sur votre appareil (localStorage) les informations que vous saisissez : nom, objectif, âge, poids, taille, niveau d'activité, préférences alimentaires, recettes favorites et journal nutritionnel.</p>
+              <p style={{margin:"0 0 10px 0"}}><strong>Aucune transmission de données</strong><br/>
+              Toutes vos données restent exclusivement sur votre appareil. Aucune donnée personnelle n'est envoyée vers un serveur, une base de données distante ou un tiers. Cette application ne collecte pas de cookies analytiques ni publicitaires.</p>
+              <p style={{margin:"0 0 10px 0"}}><strong>Suppression de vos données</strong><br/>
+              Vous pouvez supprimer toutes vos données à tout moment en vidant le cache de votre navigateur ou via les paramètres de l'application mobile.</p>
+              <p style={{margin:0}}><strong>Contact RGPD</strong><br/>
+              Pour toute question relative à vos données personnelles : <a href="mailto:contact@antoinecoaching.com" style={{color:ROSE}}>contact@antoinecoaching.com</a></p>
+            </div>
+
+            {/* Clause médicale */}
+            <div style={{background:`${ROSE}18`,borderRadius:16,padding:"18px 20px",marginBottom:16,border:`1px solid ${ROSE}44`}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE,marginBottom:12}}>⚠️ Avertissement médical important</div>
+              <p style={{margin:"0 0 10px 0"}}>Les informations, recettes et plans nutritionnels fournis par cette application sont proposés à titre <strong>informatif et éducatif uniquement</strong>. Ils ne constituent en aucun cas un avis médical, un diagnostic ou une prescription médicale.</p>
+              <p style={{margin:"0 0 10px 0"}}>Ces contenus ne remplacent pas une consultation auprès d'un <strong>médecin, diététicien-nutritionniste ou professionnel de santé agréé</strong>. Consultez impérativement un professionnel de santé avant de modifier significativement votre alimentation, notamment en cas de pathologie, grossesse, troubles du comportement alimentaire ou traitement médical en cours.</p>
+              <p style={{margin:0}}>Les calculs de dépense énergétique et de besoins nutritionnels sont des estimations basées sur des formules scientifiques générales (Mifflin-St Jeor). Ils peuvent ne pas correspondre à votre situation individuelle.</p>
+            </div>
+
+            {/* CGU */}
+            <div style={{background:T.card,borderRadius:16,padding:"18px 20px",marginBottom:16,border:`1px solid ${T.border}`}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:700,color:ROSE,marginBottom:12}}>Conditions Générales d'Utilisation</div>
+              <p style={{margin:"0 0 10px 0"}}><strong>Accès et utilisation</strong><br/>
+              Cette application est mise à disposition gratuitement par Antoine Da Costa à destination de ses clientes et de tout utilisateur souhaitant améliorer son alimentation sportive. L'utilisation implique l'acceptation des présentes CGU.</p>
+              <p style={{margin:"0 0 10px 0"}}><strong>Propriété intellectuelle</strong><br/>
+              Le contenu de cette application (recettes, textes, design, base de données nutritionnelle) est la propriété d'Antoine Da Costa. Toute reproduction totale ou partielle sans autorisation est interdite.</p>
+              <p style={{margin:"0 0 10px 0"}}><strong>Responsabilité</strong><br/>
+              Antoine Da Costa ne peut être tenu responsable des conséquences d'une utilisation inadaptée des informations fournies. L'utilisateur est seul responsable de l'usage qu'il fait de l'application.</p>
+              <p style={{margin:0}}><strong>Données nutritionnelles</strong><br/>
+              Les valeurs nutritionnelles sont issues de la table CIQUAL 2025 de l'ANSES (Agence nationale de sécurité sanitaire). Des variations peuvent exister selon les marques, modes de cuisson et origines des produits.</p>
+            </div>
+
+            <div style={{textAlign:"center",fontSize:11,color:T.textM,marginTop:20,paddingBottom:20}}>
+              Dernière mise à jour : Mars 2025 · nutrition-dcm.vercel.app
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── BOTTOM NAVIGATION BAR (mobile only) ── */}
       {isMobile&&(
         <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:250,background:darkMode?"#000":DARK,borderTop:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 -4px 20px rgba(0,0,0,0.3)",paddingBottom:"env(safe-area-inset-bottom)",backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E\")",backgroundRepeat:"repeat"}}>
@@ -2242,3 +2480,4 @@ export default function FitWomenApp(){
     </div>
   );
 }
+
