@@ -596,7 +596,14 @@ function generateRecipes() {
             .replace("{fruit}",fr?FOODS[fr]?.name:"").replace("{veggie}",v?FOODS[v]?.name:"")
             .replace("{fat}",fat?FOODS[fat]?.name:"");
           let descTxt=""; try{descTxt=tpl.desc(p,c,fr,v,fat)||"";}catch(e){}
-          all.push({id:`r${id++}`,goal,meal,name,emoji:tpl.emoji,desc:descTxt,steps:tpl.steps||[],ingredients:ing});
+          const resolvedSteps=(tpl.steps||[]).map(s=>s
+            .replace(/\$\{FOODS\[p\]\?\.name\}/g,p?FOODS[p]?.name||"":"")
+            .replace(/\$\{FOODS\[c\]\?\.name\}/g,c?FOODS[c]?.name||"":"")
+            .replace(/\$\{FOODS\[fr\]\?\.name\}/g,fr?FOODS[fr]?.name||"":"")
+            .replace(/\$\{FOODS\[v\]\?\.name\}/g,v?FOODS[v]?.name||"":"")
+            .replace(/\$\{FOODS\[fat\]\?\.name\}/g,fat?FOODS[fat]?.name||"":"")
+          );
+          all.push({id:`r${id++}`,goal,meal,name,emoji:tpl.emoji,desc:descTxt,steps:resolvedSteps,ingredients:ing});
         })))));
       });
     });
