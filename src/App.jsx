@@ -1258,7 +1258,7 @@ export default function FitWomenApp(){
           </div>
         </div>
         <div style={{display:"flex",gap:5}}>
-          {[["recette","📊 Recette"],["etapes","👨‍🍳 Prépa"],["micros","🔬 Micros"]].map(([tab,label])=>(
+          {[["recette","📊 Recette"],["etapes","🏋️ Prépa"],["micros","🔬 Micros"]].map(([tab,label])=>(
             <button key={tab} onClick={()=>setActiveTab(tab)}
               style={{flex:1,padding:"7px 4px",border:`1px solid ${activeTab===tab?ROSE:"rgba(255,255,255,0.1)"}`,borderRadius:9,background:activeTab===tab?ROSE+"22":"transparent",color:activeTab===tab?ROSE:"#666",fontFamily:"'Jost',sans-serif",fontWeight:600,fontSize:10,cursor:"pointer",transition:"all 0.15s"}}>
               {label}
@@ -1361,7 +1361,7 @@ export default function FitWomenApp(){
             {/* Mon Coach - masqué mobile (bottom nav) */}
             <button onClick={()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCustomCreator(false);setShowCoaching(v=>!v);}} title="Mon Coach" className="header-icon-hide"
               style={{background:showCoaching?`${ROSE}33`:"rgba(255,255,255,0.08)",border:`1.5px solid ${showCoaching?ROSE:"rgba(255,255,255,0.14)"}`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              👨‍💼
+              🏋️
             </button>
             {/* Mentions légales - visible desktop */}
             <button onClick={()=>{setShowLegal(v=>!v);setShowCoaching(false);setShowCustomCreator(false);setShowProfile(false);setShowCart(false);setShowWeek(false);setShowDailyPanel(false);}} title="Mentions légales" className="header-icon-hide"
@@ -2475,7 +2475,7 @@ export default function FitWomenApp(){
               {icon:"🛒", label:"Courses",   action:()=>setShowCart(true),  active:showCart,
                 badge:cart.length>0?<div style={{position:"absolute",top:6,right:"50%",transform:"translateX(calc(50% + 8px))",width:14,height:14,borderRadius:"50%",background:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:"#fff"}}>{cart.length}</div>:null},
               {icon:"👤", label:"Profil",    action:()=>setShowProfile(true), active:showProfile, badge:null},
-              {icon:"👨‍💼", label:"Mon Coach", action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(true);setShowCustomCreator(false);}, active:showCoaching, badge:null},
+              {icon:"🏋️", label:"Mon Coach", action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(true);setShowCustomCreator(false);}, active:showCoaching, badge:null},
               {icon:"📋", label:"Légal",     action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(false);setShowCustomCreator(false);setShowLegal(true);}, active:showLegal, badge:null},
             ].map(({icon,label,action,active,badge})=>(
               <button key={label} onClick={action}
@@ -2489,10 +2489,6 @@ export default function FitWomenApp(){
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
     </div>
   );
 }
