@@ -2254,13 +2254,13 @@ export default function FitWomenApp(){
             </div>
             <div style={{marginTop:20,paddingBottom:8}}>
               <button onClick={()=>{setShowCoaching(false);setShowLegal(true);}}
-                style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"14px 16px",cursor:"pointer",textAlign:"left"}}>
-                <div style={{width:40,height:40,borderRadius:12,background:"rgba(201,168,130,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>⚖️</div>
+                style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:T.cardAlt,border:`1px solid ${T.border}`,borderRadius:14,padding:"14px 16px",cursor:"pointer",textAlign:"left"}}>
+                <div style={{width:40,height:40,borderRadius:12,background:`${ROSE}22`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>⚖️</div>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.8)"}}>Mentions légales</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Confidentialité · CGU · Avertissement médical</div>
+                  <div style={{fontSize:13,fontWeight:700,color:T.text}}>Mentions légales</div>
+                  <div style={{fontSize:11,color:T.textM,marginTop:2}}>Confidentialité · CGU · Avertissement médical</div>
                 </div>
-                <div style={{fontSize:18,color:"rgba(255,255,255,0.2)"}}>›</div>
+                <div style={{fontSize:18,color:T.textM}}>›</div>
               </button>
             </div>
           </div>
