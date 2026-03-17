@@ -1363,11 +1363,7 @@ export default function FitWomenApp(){
               style={{background:showCoaching?`${ROSE}33`:"rgba(255,255,255,0.08)",border:`1.5px solid ${showCoaching?ROSE:"rgba(255,255,255,0.14)"}`,borderRadius:11,width:40,height:40,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               🏋️
             </button>
-            {/* Mentions légales - visible desktop */}
-            <button onClick={()=>{setShowLegal(v=>!v);setShowCoaching(false);setShowCustomCreator(false);setShowProfile(false);setShowCart(false);setShowWeek(false);setShowDailyPanel(false);}} title="Mentions légales" className="header-icon-hide"
-              style={{background:showLegal?`${ROSE}33`:"rgba(255,255,255,0.08)",border:`1.5px solid ${showLegal?ROSE:"rgba(255,255,255,0.14)"}`,borderRadius:11,padding:"0 10px",height:40,cursor:"pointer",fontSize:11,fontWeight:700,color:showLegal?ROSE:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,whiteSpace:"nowrap"}}>
-              ⚖️ Légal
-            </button>
+
           </div>
         </div>
       </div>
@@ -2249,11 +2245,15 @@ export default function FitWomenApp(){
                 <div key={txt} style={{fontSize:13,color:T.text,marginBottom:8,lineHeight:1.5}}>{txt}</div>
               ))}
             </div>
-            <div style={{textAlign:"center",marginTop:24,paddingBottom:4}}>
+            <div style={{marginTop:20,paddingBottom:8}}>
               <button onClick={()=>{setShowCoaching(false);setShowLegal(true);}}
-                style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"10px 20px",cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
-                <span style={{fontSize:16}}>⚖️</span>
-                <span>Mentions légales & Confidentialité</span>
+                style={{width:"100%",display:"flex",alignItems:"center",gap:14,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:14,padding:"14px 16px",cursor:"pointer",textAlign:"left"}}>
+                <div style={{width:40,height:40,borderRadius:12,background:"rgba(201,168,130,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>⚖️</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"rgba(255,255,255,0.8)"}}>Mentions légales</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Confidentialité · CGU · Avertissement médical</div>
+                </div>
+                <div style={{fontSize:18,color:"rgba(255,255,255,0.2)"}}>›</div>
               </button>
             </div>
           </div>
@@ -2476,7 +2476,7 @@ export default function FitWomenApp(){
                 badge:cart.length>0?<div style={{position:"absolute",top:6,right:"50%",transform:"translateX(calc(50% + 8px))",width:14,height:14,borderRadius:"50%",background:ROSE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:"#fff"}}>{cart.length}</div>:null},
               {icon:"👤", label:"Profil",    action:()=>setShowProfile(true), active:showProfile, badge:null},
               {icon:"🏋️", label:"Mon Coach", action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(true);setShowCustomCreator(false);}, active:showCoaching, badge:null},
-              {icon:"📋", label:"Légal",     action:()=>{setShowWeek(false);setShowCart(false);setShowDailyPanel(false);setShowProfile(false);setShowCoaching(false);setShowCustomCreator(false);setShowLegal(true);}, active:showLegal, badge:null},
+
             ].map(({icon,label,action,active,badge})=>(
               <button key={label} onClick={action}
                 style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,border:"none",background:"transparent",cursor:"pointer",padding:"6px 0",position:"relative",transition:"all 0.15s"}}>
