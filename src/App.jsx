@@ -2,22 +2,22 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 
 // ─── CIQUAL 2025 + Micronutriments ────────────────────────────────────────────
 const FOODS = {
-  poulet:        { name:"Blanc de poulet",     cal:165,p:31,c:0,  f:3.6, emoji:"🍗", fiber:0,  iron:0.9, vitC:0,  calcium:11, magnesium:29,  omega3:0.1 },
-  dinde:         { name:"Blanc de dinde",      cal:135,p:30,c:0,  f:1.5, emoji:"🦃", fiber:0,  iron:1.2, vitC:0,  calcium:8,  magnesium:25,  omega3:0.05},
-  saumon:        { name:"Saumon",              cal:206,p:20,c:0,  f:13,  emoji:"🐟", fiber:0,  iron:0.8, vitC:0,  calcium:12, magnesium:27,  omega3:2.3 },
-  thon:          { name:"Thon (eau)",          cal:116,p:26,c:0,  f:1,   emoji:"🐠", fiber:0,  iron:1.3, vitC:0,  calcium:15, magnesium:30,  omega3:0.5 },
-  crevettes:     { name:"Crevettes",           cal:99, p:21,c:0,  f:1.5, emoji:"🦐", fiber:0,  iron:2.4, vitC:2,  calcium:70, magnesium:34,  omega3:0.3 },
-  cabillaud:     { name:"Cabillaud",           cal:82, p:18,c:0,  f:0.7, emoji:"🐡", fiber:0,  iron:0.5, vitC:0,  calcium:18, magnesium:22,  omega3:0.15},
-  oeuf:          { name:"Œuf entier",          cal:155,p:13,c:1.1,f:11,  emoji:"🥚", fiber:0,  iron:1.8, vitC:0,  calcium:55, magnesium:12,  omega3:0.1 },
-  blanc_oeuf:    { name:"Blanc d'œuf",         cal:52, p:11,c:0.7,f:0.2, emoji:"🥚", fiber:0,  iron:0.1, vitC:0,  calcium:7,  magnesium:11,  omega3:0   },
-  boeuf:         { name:"Bœuf maigre",         cal:172,p:26,c:0,  f:7,   emoji:"🥩", fiber:0,  iron:2.7, vitC:0,  calcium:8,  magnesium:22,  omega3:0.05},
-  cottage:       { name:"Cottage cheese",      cal:98, p:11,c:3.4,f:4.3, emoji:"🧀", fiber:0,  iron:0.1, vitC:0,  calcium:60, magnesium:9,   omega3:0.1 },
-  yaourt_grec:   { name:"Yaourt grec 0%",      cal:60, p:10,c:4,  f:0.3, emoji:"🥛", fiber:0,  iron:0.1, vitC:1,  calcium:110,magnesium:12,  omega3:0   },
-  fromage_blanc: { name:"Fromage blanc 0%",    cal:45, p:7.8,c:4.5,f:0.1,emoji:"🥛", fiber:0,  iron:0.1, vitC:0,  calcium:90, magnesium:11,  omega3:0   },
-  skyr:          { name:"Skyr nature",         cal:63, p:11,c:4,  f:0.2, emoji:"🥛", fiber:0,  iron:0.1, vitC:0,  calcium:120,magnesium:13,  omega3:0   },
-  whey:          { name:"Whey protéine",       cal:400,p:80,c:10, f:5,   emoji:"💪", fiber:0,  iron:1,   vitC:0,  calcium:200,magnesium:50,  omega3:0   },
-  ricotta:       { name:"Ricotta légère",      cal:138,p:9, c:3,  f:10,  emoji:"🧀", fiber:0,  iron:0.2, vitC:0,  calcium:105,magnesium:10,  omega3:0.2 },
-  mozzarella:    { name:"Mozzarella light",    cal:156,p:18,c:2,  f:9,   emoji:"🧀", fiber:0,  iron:0.3, vitC:0,  calcium:400,magnesium:18,  omega3:0.1 },
+  poulet:        { name:"Blanc de poulet",     cal:165,p:31,c:0,  f:3.6, emoji:"🍗", fiber:0,  iron:0.9, vitC:0,  calcium:11, magnesium:29,  omega3:0.1,  role:"protein" },
+  dinde:         { name:"Blanc de dinde",      cal:135,p:30,c:0,  f:1.5, emoji:"🦃", fiber:0,  iron:1.2, vitC:0,  calcium:8,  magnesium:25,  omega3:0.05, role:"protein" },
+  saumon:        { name:"Saumon",              cal:206,p:20,c:0,  f:13,  emoji:"🐟", fiber:0,  iron:0.8, vitC:0,  calcium:12, magnesium:27,  omega3:2.3,  role:"protein" },
+  thon:          { name:"Thon (eau)",          cal:116,p:26,c:0,  f:1,   emoji:"🐠", fiber:0,  iron:1.3, vitC:0,  calcium:15, magnesium:30,  omega3:0.5,  role:"protein" },
+  crevettes:     { name:"Crevettes",           cal:99, p:21,c:0,  f:1.5, emoji:"🦐", fiber:0,  iron:2.4, vitC:2,  calcium:70, magnesium:34,  omega3:0.3,  role:"protein" },
+  cabillaud:     { name:"Cabillaud",           cal:82, p:18,c:0,  f:0.7, emoji:"🐡", fiber:0,  iron:0.5, vitC:0,  calcium:18, magnesium:22,  omega3:0.15, role:"protein" },
+  oeuf:          { name:"Œuf entier",          cal:155,p:13,c:1.1,f:11,  emoji:"🥚", fiber:0,  iron:1.8, vitC:0,  calcium:55, magnesium:12,  omega3:0.1,  role:"protein" },
+  blanc_oeuf:    { name:"Blanc d'œuf",         cal:52, p:11,c:0.7,f:0.2, emoji:"🥚", fiber:0,  iron:0.1, vitC:0,  calcium:7,  magnesium:11,  omega3:0,    role:"protein" },
+  boeuf:         { name:"Bœuf maigre",         cal:172,p:26,c:0,  f:7,   emoji:"🥩", fiber:0,  iron:2.7, vitC:0,  calcium:8,  magnesium:22,  omega3:0.05, role:"protein" },
+  cottage:       { name:"Cottage cheese",      cal:98, p:11,c:3.4,f:4.3, emoji:"🧀", fiber:0,  iron:0.1, vitC:0,  calcium:60, magnesium:9,   omega3:0.1,  role:"protein" },
+  yaourt_grec:   { name:"Yaourt grec 0%",      cal:60, p:10,c:4,  f:0.3, emoji:"🥛", fiber:0,  iron:0.1, vitC:1,  calcium:110,magnesium:12,  omega3:0,    role:"protein" },
+  fromage_blanc: { name:"Fromage blanc 0%",    cal:45, p:7.8,c:4.5,f:0.1,emoji:"🥛", fiber:0,  iron:0.1, vitC:0,  calcium:90, magnesium:11,  omega3:0,    role:"protein" },
+  skyr:          { name:"Skyr nature",         cal:63, p:11,c:4,  f:0.2, emoji:"🥛", fiber:0,  iron:0.1, vitC:0,  calcium:120,magnesium:13,  omega3:0,    role:"protein" },
+  whey:          { name:"Whey protéine",       cal:400,p:80,c:10, f:5,   emoji:"💪", fiber:0,  iron:1,   vitC:0,  calcium:200,magnesium:50,  omega3:0,    role:"protein" },
+  ricotta:       { name:"Ricotta légère",      cal:138,p:9, c:3,  f:10,  emoji:"🧀", fiber:0,  iron:0.2, vitC:0,  calcium:105,magnesium:10,  omega3:0.2,  role:"protein" },
+  mozzarella:    { name:"Mozzarella light",    cal:156,p:18,c:2,  f:9,   emoji:"🧀", fiber:0,  iron:0.3, vitC:0,  calcium:400,magnesium:18,  omega3:0.1,  role:"protein" },
   riz:           { name:"Riz basmati",         cal:130,p:2.7,c:28,f:0.3, emoji:"🍚", fiber:0.4,iron:0.2, vitC:0,  calcium:10, magnesium:13,  omega3:0   },
   riz_complet:   { name:"Riz complet",         cal:112,p:2.6,c:23,f:0.9, emoji:"🍚", fiber:1.8,iron:0.5, vitC:0,  calcium:10, magnesium:43,  omega3:0   },
   patate_douce:  { name:"Patate douce",        cal:90, p:1.6,c:20,f:0.1, emoji:"🍠", fiber:2.5,iron:0.6, vitC:19, calcium:30, magnesium:25,  omega3:0   },
@@ -543,19 +543,26 @@ function computeMicros(ingredients) {
   };
 }
 
+function getCaloricPct(food) {
+  const calP=food.p*4, calC=food.c*4, calF=food.f*9;
+  const total=calP+calC+calF||1;
+  return {pctP:calP/total*100, pctC:calC/total*100, pctF:calF/total*100};
+}
 function getAdjustableInfo(ingredients) {
+  const SEUIL=30;
   const keys=Object.keys(ingredients);
-  const hasProtein=keys.some(k=>FOODS[k]?.p>12);
-  const hasCarb=keys.some(k=>FOODS[k]?.c>12&&(FOODS[k]?.p||0)<12);
-  const hasFat=keys.some(k=>FOODS[k]?.f>8);
+  const hasProtein=keys.some(k=>FOODS[k]&&getCaloricPct(FOODS[k]).pctP>=SEUIL);
+  const hasCarb=keys.some(k=>FOODS[k]&&getCaloricPct(FOODS[k]).pctC>=SEUIL);
+  const hasFat=keys.some(k=>FOODS[k]&&getCaloricPct(FOODS[k]).pctF>=SEUIL);
   return {hasProtein,hasCarb,hasFat};
 }
 
 function adjustRecipe(base,targets) {
   const ing={...base}; const keys=Object.keys(ing);
-  const PS=keys.filter(k=>FOODS[k]?.p>12);
-  const CS=keys.filter(k=>FOODS[k]?.c>12&&(FOODS[k]?.p||0)<12);
-  const FS=keys.filter(k=>FOODS[k]?.f>8);
+  const SEUIL=30;
+  const PS=keys.filter(k=>FOODS[k]&&getCaloricPct(FOODS[k]).pctP>=SEUIL);
+  const CS=keys.filter(k=>FOODS[k]&&getCaloricPct(FOODS[k]).pctC>=SEUIL);
+  const FS=keys.filter(k=>FOODS[k]&&getCaloricPct(FOODS[k]).pctF>=SEUIL);
   const bm=computeMacros(ing);
   if(PS.length&&bm.p>0&&targets.p!=null){
     const r=Math.max(0.3,Math.min(4,targets.p/bm.p));
@@ -2499,4 +2506,3 @@ export default function FitWomenApp(){
     </div>
   );
 }
-
