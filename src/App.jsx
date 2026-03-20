@@ -1814,23 +1814,69 @@ export default function FitWomenApp(){
                       </div>
                     ))}
                   </div>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Ingrédients à acheter</div>
-                    {shoppingList.map(({key,food,grams})=>{
-                      const checked=checkedItems[key];
-                      return(
-                        <div key={key} onClick={()=>setCheckedItems(c=>({...c,[key]:!c[key]}))}
-                          style={{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:`1px solid ${T.borderLL}`,cursor:"pointer",opacity:checked?0.4:1}}>
-                          <div style={{width:19,height:19,borderRadius:5,border:`2px solid ${checked?ROSE:"#e0d8d0"}`,background:checked?ROSE:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                            {checked&&<span style={{color:"#fff",fontSize:10}}>✓</span>}
+                  {(()=>{
+                    const CATEGORIES=[
+                      {key:"protein", label:"🥩 Protéines",  color:"#d4826a", bg:"#fdf3ee", keys:["poulet","dinde","saumon","thon","crevettes","cabillaud","oeuf","blanc_oeuf","boeuf","cottage","yaourt_grec","fromage_blanc","skyr","whey","ricotta","mozzarella","tofu","fromage_frais","edamame"]},
+                      {key:"carb",    label:"🌾 Féculents",   color:"#7a9e87", bg:"#f0f5f1", keys:["riz","riz_complet","patate_douce","pomme_terre","avoine","quinoa","pain_seigle","pain_complet","lentilles","pois_chiches","haricots","pates","lentille_corail","pois_casses","sirop_agave","miel"]},
+                      {key:"veggie",  label:"🥦 Légumes",     color:"#6b9e72", bg:"#f0f7f1", keys:["brocoli","epinards","courgette","tomate","concombre","poivron","champignon","haricots_verts","asperges","salade","carotte","potiron","butternut","kale"]},
+                      {key:"fruit",   label:"🍓 Fruits",      color:"#c47a8a", bg:"#fdf0f2", keys:["banane","myrtilles","fraises","pomme","mangue","lait_avoine"]},
+                      {key:"fat",     label:"🥑 Lipides",     color:"#b08a6e", bg:"#faf5f0", keys:["avocat","amandes","noix","huile_olive","beurre_cac","tahini","graines_chia","cacao"]},
+                    ];
+                    const grouped={};
+                    shoppingList.forEach(item=>{
+                      let cat="autre";
+                      for(const c of CATEGORIES){if(c.keys.includes(item.key)){cat=c.key;break;}}
+                      if(!grouped[cat])grouped[cat]=[];
+                      grouped[cat].push(item);
+                    });
+                    const uncategorized=grouped["autre"]||[];
+                    return(
+                      <div>
+                        <div style={{fontSize:10,fontWeight:700,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>Ingrédients à acheter</div>
+                        {CATEGORIES.filter(c=>grouped[c.key]?.length>0).map(cat=>(
+                          <div key={cat.key} style={{marginBottom:14}}>
+                            <div style={{fontSize:11,fontWeight:700,color:cat.color,marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+                              <span>{cat.label}</span>
+                              <span style={{fontSize:10,background:cat.bg,color:cat.color,borderRadius:99,padding:"1px 7px",fontWeight:800}}>{grouped[cat.key].length}</span>
+                            </div>
+                            {grouped[cat.key].map(({key,food,grams})=>{
+                              const checked=checkedItems[key];
+                              return(
+                                <div key={key} onClick={()=>setCheckedItems(c=>({...c,[key]:!c[key]}))}
+                                  style={{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",background:checked?T.cardAlt:cat.bg,borderRadius:10,marginBottom:4,cursor:"pointer",opacity:checked?0.45:1,transition:"all 0.15s"}}>
+                                  <div style={{width:19,height:19,borderRadius:5,border:`2px solid ${checked?ROSE:cat.color+"66"}`,background:checked?ROSE:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                                    {checked&&<span style={{color:"#fff",fontSize:10}}>✓</span>}
+                                  </div>
+                                  <span style={{fontSize:16}}>{food.emoji}</span>
+                                  <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.text,textDecoration:checked?"line-through":"none"}}>{food.name}</div></div>
+                                  <div style={{background:"rgba(201,168,130,0.15)",color:"#8a6040",fontWeight:800,fontSize:12,borderRadius:8,padding:"2px 9px",fontFamily:"'Cormorant Garamond',serif"}}>{grams}g</div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <span style={{fontSize:17}}>{food.emoji}</span>
-                          <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:DARK,textDecoration:checked?"line-through":"none"}}>{food.name}</div></div>
-                          <div style={{background:ROSE_L,color:"#8a6040",fontWeight:800,fontSize:12,borderRadius:8,padding:"2px 9px",fontFamily:"'Cormorant Garamond',serif"}}>{grams}g</div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        ))}
+                        {uncategorized.length>0&&(
+                          <div style={{marginBottom:14}}>
+                            <div style={{fontSize:11,fontWeight:700,color:T.textM,marginBottom:6}}>🔸 Autres</div>
+                            {uncategorized.map(({key,food,grams})=>{
+                              const checked=checkedItems[key];
+                              return(
+                                <div key={key} onClick={()=>setCheckedItems(c=>({...c,[key]:!c[key]}))}
+                                  style={{display:"flex",alignItems:"center",gap:9,padding:"8px 0",borderBottom:`1px solid ${T.borderLL}`,cursor:"pointer",opacity:checked?0.4:1}}>
+                                  <div style={{width:19,height:19,borderRadius:5,border:`2px solid ${checked?ROSE:"#e0d8d0"}`,background:checked?ROSE:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                                    {checked&&<span style={{color:"#fff",fontSize:10}}>✓</span>}
+                                  </div>
+                                  <span style={{fontSize:16}}>{food.emoji}</span>
+                                  <div style={{flex:1}}><div style={{fontSize:12,fontWeight:600,color:T.text,textDecoration:checked?"line-through":"none"}}>{food.name}</div></div>
+                                  <div style={{background:"rgba(201,168,130,0.15)",color:"#8a6040",fontWeight:800,fontSize:12,borderRadius:8,padding:"2px 9px",fontFamily:"'Cormorant Garamond',serif"}}>{grams}g</div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </>
               )}
             </div>
@@ -1889,26 +1935,78 @@ export default function FitWomenApp(){
               {/* ── Historique 7 jours ── */}
               {dailyHistory.length>0&&(
                 <div style={{marginBottom:20}}>
-                  <div style={{fontSize:10,fontWeight:700,color:T.textM,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>7 derniers jours</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                    <div style={{fontSize:10,fontWeight:700,color:T.textM,textTransform:"uppercase",letterSpacing:"0.1em"}}>7 derniers jours</div>
+                    {(()=>{
+                      const avg=Math.round(dailyHistory.reduce((s,e)=>s+e.cal,0)/dailyHistory.length);
+                      const trend=dailyHistory.length>=3?dailyHistory[0].cal-dailyHistory[dailyHistory.length-1].cal:0;
+                      return <div style={{fontSize:10,color:T.textM}}>Moy. <span style={{fontWeight:700,color:ROSE,fontFamily:"'Cormorant Garamond',serif"}}>{avg}</span> kcal <span style={{color:trend>50?"#f08080":trend<-50?"#80c880":"#bbb"}}>{trend>50?"↗ hausse":trend<-50?"↘ baisse":"→ stable"}</span></div>;
+                    })()}
+                  </div>
+                  {/* Sparkline SVG */}
+                  {dailyHistory.length>=2&&(()=>{
+                    const W=320,H=52,PAD=8;
+                    const vals=dailyHistory.map(e=>e.cal).reverse();
+                    const goals=dailyHistory.map(e=>e.goal).reverse();
+                    const maxV=Math.max(...vals,...goals)*1.1;
+                    const minV=Math.min(...vals)*0.85;
+                    const xScale=(i)=>PAD+(i/(vals.length-1))*(W-PAD*2);
+                    const yScale=(v)=>H-PAD-(v-minV)/(maxV-minV)*(H-PAD*2);
+                    const points=vals.map((v,i)=>`${xScale(i)},${yScale(v)}`).join(" ");
+                    const goalPoints=goals.map((v,i)=>`${xScale(i)},${yScale(v)}`).join(" ");
+                    const areaPoints=`${PAD},${H-PAD} ${points} ${xScale(vals.length-1)},${H-PAD}`;
+                    return(
+                      <div style={{background:T.cardAlt,borderRadius:14,padding:"12px 14px",marginBottom:12}}>
+                        <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{overflow:"visible"}}>
+                          {/* Zone remplie */}
+                          <polygon points={areaPoints} fill={ROSE} opacity="0.08"/>
+                          {/* Ligne objectif pointillée */}
+                          <polyline points={goalPoints} fill="none" stroke="#bbb" strokeWidth="1" strokeDasharray="3 3" opacity="0.5"/>
+                          {/* Courbe principale */}
+                          <polyline points={points} fill="none" stroke={ROSE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          {/* Points */}
+                          {vals.map((v,i)=>{
+                            const pct=v/goals[i]*100;
+                            const col=pct>110?"#f08080":pct>=90?"#80c880":"#e8c070";
+                            return <circle key={i} cx={xScale(i)} cy={yScale(v)} r="3.5" fill={col} stroke="#fff" strokeWidth="1.5"/>;
+                          })}
+                        </svg>
+                        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                          {dailyHistory.slice().reverse().map((entry,i)=>{
+                            const d=new Date(entry.date);
+                            const lbl=d.toLocaleDateString("fr-FR",{weekday:"short"}).slice(0,3);
+                            return <div key={i} style={{fontSize:9,color:T.textM,textAlign:"center",flex:1}}>{lbl}</div>;
+                          })}
+                        </div>
+                        <div style={{display:"flex",gap:12,marginTop:8,justifyContent:"center"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:T.textM}}><div style={{width:16,height:2,background:ROSE,borderRadius:99}}/> Réel</div>
+                          <div style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:T.textM}}><div style={{width:16,height:2,background:"#bbb",borderRadius:99,borderTop:"1px dashed #bbb"}}/> Objectif</div>
+                          <div style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:"#80c880"}}><div style={{width:8,height:8,borderRadius:"50%",background:"#80c880"}}/> Atteint</div>
+                          <div style={{display:"flex",alignItems:"center",gap:4,fontSize:9,color:"#f08080"}}><div style={{width:8,height:8,borderRadius:"50%",background:"#f08080"}}/> Dépassé</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Détail par jour */}
                   {dailyHistory.map((entry,i)=>{
                     const d=new Date(entry.date);
                     const label=i===0?"Hier":d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
-                    const pct=Math.min(100,Math.round(entry.cal/entry.goal*100));
+                    const pct=Math.min(120,Math.round(entry.cal/entry.goal*100));
                     const ok=pct>=90&&pct<=110;
                     return(
-                      <div key={entry.date} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:T.cardAlt,borderRadius:12,marginBottom:6}}>
-                        <div style={{width:36,textAlign:"center"}}>
+                      <div key={entry.date} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 10px",background:T.cardAlt,borderRadius:10,marginBottom:5}}>
+                        <div style={{width:34,textAlign:"center"}}>
                           <div style={{fontSize:10,fontWeight:700,color:T.textM,textTransform:"capitalize"}}>{label}</div>
                         </div>
                         <div style={{flex:1}}>
-                          <div style={{height:5,background:T.border,borderRadius:99,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${pct}%`,background:pct>110?"#f08080":pct>80?"#80c880":"#e8c070",borderRadius:99}}/>
+                          <div style={{height:4,background:T.border,borderRadius:99,overflow:"hidden"}}>
+                            <div style={{height:"100%",width:`${Math.min(100,pct)}%`,background:pct>110?"#f08080":pct>80?"#80c880":"#e8c070",borderRadius:99,transition:"width 0.4s"}}/>
                           </div>
                         </div>
-                        <div style={{textAlign:"right",minWidth:70}}>
+                        <div style={{textAlign:"right",minWidth:68}}>
                           <span style={{fontSize:12,fontWeight:800,color:ok?"#80c880":pct>110?"#f08080":T.textM,fontFamily:"'Cormorant Garamond',serif"}}>{entry.cal}</span>
                           <span style={{fontSize:9,color:T.textM}}> kcal</span>
-                          <span style={{fontSize:11,marginLeft:4}}>{ok?"✓":pct>110?"↑":"↓"}</span>
+                          <span style={{fontSize:10,marginLeft:3}}>{ok?"✓":pct>110?"↑":"↓"}</span>
                         </div>
                       </div>
                     );
